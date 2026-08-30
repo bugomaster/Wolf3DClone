@@ -1,6 +1,8 @@
 Wolfenstein 3D clone
 Assets from 
 https://www.spriters-resource.com/ms_dos/wolfenstein3d/
+https://textures.spriters-resource.com/ms_dos/wolfenstein3d/
+
 
 A property file for visual studio included "PropertySheet.props" 
 and SDL2 dlls as well 
