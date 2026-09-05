@@ -1,6 +1,6 @@
 #include "SoundManager.hpp"
 #include "pch.hpp"
-#define MUTE
+//#define MUTE
 bool SoundManager::init()
 {
 #ifdef MUTE
