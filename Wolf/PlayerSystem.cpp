@@ -11,6 +11,26 @@
 #include "RayCastingSystem.hpp"
 #include "SoundManager.hpp"
 
+/*
+TODO:
+GENERAL:
+trophies and collectibles
+decorations -> lamps, small trees, flags , dining tables
+
+cutscenes between levels
+menu
+strip the real font
+
+
+ENEMIES:
+guard dog
+ss
+mutant
+officer
+first bos
+
+*/
+
 
 
 
@@ -66,20 +86,20 @@ void PlayerSystem::update(World* world) {
 
 
 
-
 void PlayerSystem::initPlayer() {
     Entity* player = gameScene->world->createEntity();
     this->playerEntity = player;
     gameScene->playerEntity = player;
 
-    //todo init player
     player->addComponent<PlayerComponent>()->weapon = PlayerComponent::Weapon::PISTOL;
     player->addComponent<InputComponent>();
     player->addComponent<TimerComponent>();
     player->addComponent<TextureComponent>(g_assets.weapons.texture);
     player->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WEAPONS, 25);
     player->addComponent<VelocityComponent>(0.f, 0.f, 0.f);
-    player->addComponent<PositionComponent>(Vector2f{2.f, 2.f}, GFX::PLAYER_RADIUS);
+    player->addComponent<PositionComponent>
+        (gameScene->levelData.playerStart, GFX::PLAYER_RADIUS)
+        ->setAngle(gameScene->levelData.cameraStart.x/180.f*GFX::PI);
 
     //face expression
     player->addComponent<RepeatedTimerComponent>(200, [](Entity* player)
@@ -136,21 +156,62 @@ void PlayerSystem::updateInput() {
 
 void PlayerSystem::updateDoorOpen() {
     auto* inputComp = playerEntity->getComponent<InputComponent>();
-    if (inputComp->e)//open door
+    auto* playerComp = playerEntity->getComponent<PlayerComponent>();
+    auto mid = RayCastingSystem::middleRay;
+    if (mid.entity && mid.rayHit.dist < 3.f)// middle ray -> points to object 
     {
-        auto mid = RayCastingSystem::middleRay;
-        if (mid.entity && mid.rayHit.dist < 3.f)// middle ray -> points to object 
+        Entity* wall = MapSystem::gridObjectsMap[mid.rayHit.mapCoords.y][mid.rayHit.mapCoords.x];
+        if (!wall)
+            return;
+        if (inputComp->e && wall->hasComponent<DoorComponent>())//open door
         {
-            Entity* door = MapSystem::gridObjectsMap[mid.rayHit.mapCoords.y][mid.rayHit.mapCoords.x];
-            if (door)
+            auto* doorComp = wall->getComponent<DoorComponent>();
+            if (!doorComp->open)
+                doorComp->opening = true;
+        }
+        else if (wall->hasComponent<SecretWallComponent>())
+        {
+            auto* wallComp = wall->getComponent<SecretWallComponent>();
+            if (mid.rayHit.dist < 0.5f && !wallComp->moving)
             {
-                auto* doorComp = door->getComponent<DoorComponent>();
-                if (doorComp && !doorComp->open)
+                wallComp->moving = true;
+                auto* wallComp = wall->getComponent<SecretWallComponent>();
+                wall->getComponent<VelocityComponent>()->dx = 0.01f;
+                wall->getComponent<TimerComponent>()->addTimer(1, [wallComp](Entity* wall)
                 {
-                    doorComp->opening = true;
-                }
+                    wall->getComponent<VelocityComponent>()->dx = 0.f;
+                    wallComp->moving = false;
+
+
+                    auto* posWall = wall->getComponent<PositionComponent>();
+                    Vector2i currentPosI = { (int)posWall->position.x , (int)posWall->position.y };
+                    Vector2i prevPosI = wallComp->prevMapCoord;
+
+                    if (prevPosI != currentPosI) {
+                        //gridObjectsMap switch
+                        {
+                            const auto valSwitch = MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x];
+                            MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x] =
+                                MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x];
+                            MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x] = valSwitch;
+                        }
+                        wallComp->prevMapCoord = currentPosI;
+                    }
+                });
             }
 
+        }
+        else if (inputComp->e 
+                    && wall->hasComponent<LockGateComponent>()
+                    && mid.rayHit.dist < 1.5f)
+        {
+            auto* lockComp = wall->getComponent<LockGateComponent>();
+            if (!lockComp->open &&
+                std::find(playerComp->keys.begin(), playerComp->keys.end(), lockComp->keyID) != playerComp->keys.end())
+            {
+                lockComp->open = true;
+                wall->getComponent<RectFacesComponent>()->faceIDs.at(0) = 43;// open texture
+            }
         }
     }
 
@@ -207,11 +268,14 @@ void PlayerSystem::updateShooting() {
 
 
             // if hit enemy
-            auto* enemyEntity = RayCastingSystem::middleRay.entity;
-            auto* enemyComp = enemyEntity->getComponent<EnemyComponent>();
-            if (enemyComp && RayCastingSystem::middleRay.rayHit.dist < GFX::MAX_SHOOT_RANGE)
+            if (RayCastingSystem::middleRay.entity)
             {
-                enemyComp->lives--;
+                auto* enemyEntity = RayCastingSystem::middleRay.entity;
+                auto* enemyComp = enemyEntity->getComponent<EnemyComponent>();
+                if (enemyComp && RayCastingSystem::middleRay.rayHit.dist < GFX::MAX_SHOOT_RANGE)
+                {
+                    enemyComp->lives--;
+                }
             }
 
         }
@@ -319,7 +383,7 @@ void PlayerSystem::checkCollectibleCollision(World* world , MoveData& moveData)
     {
         if (col.entity->hasComponent<CollectibleComponent>())
         {
-
+            //todo
             // collect
             Collectible typeCollectible = col.entity->getComponent<CollectibleComponent>()->type;
             switch (typeCollectible)
@@ -328,12 +392,37 @@ void PlayerSystem::checkCollectibleCollision(World* world , MoveData& moveData)
                 gameScene->getAudio()->playSound("ammo");
                 playerComp->ammo += 10;
             }break;
+            case Collectible::GOLDBOX: {
+                gameScene->getAudio()->playSound("ammo");
+                playerComp->points += 100;
+            }break;
+            case Collectible::TROPHIE: {
+                gameScene->getAudio()->playSound("ammo");
+                playerComp->points += 100;
+            }break;
+            case Collectible::MEAL:
+            case Collectible::MEATBALLS:
+            {
+                if (playerComp->health >= 100)
+                    continue;
+
+                gameScene->getAudio()->playSound("ammo");
+                playerComp->health += 20;
+            }break;
+            case Collectible::KEY:
+            {
+                gameScene->getAudio()->playSound("ammo");
+                playerComp->keys.push_back(col.entity->getComponent<KeyComponent>()->keyID);//key id
+            }break;
             default:
                 break;
             }
+            if (playerComp->health > 100)
+                playerComp->health = 100;
+
             world->destroyEntity(col.entity);
 
-
+            return;
         }
     }
 }

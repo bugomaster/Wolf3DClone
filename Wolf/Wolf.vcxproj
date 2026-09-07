@@ -158,6 +158,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="LevelData.cpp" />
     <ClCompile Include="Map.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
@@ -208,8 +209,10 @@
     <ClInclude Include="GameScene.hpp" />
     <ClInclude Include="GFX.hpp" />
     <ClInclude Include="Input.hpp" />
+    <ClInclude Include="LevelData.hpp" />
     <ClInclude Include="Map.hpp" />
     <ClInclude Include="MapSystem.hpp" />
+    <ClInclude Include="MathWolf.hpp" />
     <ClInclude Include="MenuScene.hpp" />
     <ClInclude Include="MovementSystem.hpp" />
     <ClInclude Include="pch.hpp" />

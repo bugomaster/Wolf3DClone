@@ -18,15 +18,22 @@ void RenderSystem::renderPlayerStats()
 
     std::string ammoText = std::to_string(playerComp->ammo);
     if (playerComp->ammo > 99)
-    {
         ammoText = "99";
-    }
+    //ammo
     scene->getScreen()->renderText(560, 560, 70, ammoText, COLORS::FONT);
-
+    //score
+    scene->getScreen()->renderText(160, 560, 70, std::to_string(playerComp->points) , COLORS::FONT);
+    //health
     scene->getScreen()->renderText(460, 560, 70, std::to_string(playerComp->health), COLORS::FONT);
+    //lives
+    scene->getScreen()->renderText(280, 560, 70, std::to_string(playerComp->lives), COLORS::FONT);
+
+
+    //
     Vector2i tMapPicPos = { 0,0 };
     float scale = 3.f;
     SDL_Rect srcRect = { 0,0, 48, 22 };
+    //weapon
     {
         switch (playerComp->weapon)
         {
@@ -53,7 +60,7 @@ void RenderSystem::renderPlayerStats()
         scene->getScreen()->blitPixelsFromTextureScale(g_assets.gunsStatsTMap.texture, srcRect, dstRect);
 
     }
-
+    // face
     {
         tMapPicPos = { 0, 0 };
         if (playerComp->health < 10)
@@ -152,6 +159,7 @@ void RenderSystem::renderDotEntity(Entity* entity) {
         Vector2i sprSheetCoords = sprSheet->getCoords(pos->getAngle());
         if (RayCastingSystem::middleRay.entity == entity)
         {
+
             auto* spriteSheet = entity->getComponent<SpritesheetComponent>();
 
             float ratioPadX =

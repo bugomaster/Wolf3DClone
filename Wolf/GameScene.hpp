@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Scene.hpp"
+#include "LevelData.hpp"
 class World;
 class Camera;
 class Map;
@@ -13,7 +14,7 @@ public:
     World* world;
     Entity* playerEntity;
     float yScreenOffset = 0.f;
-
+    LevelData levelData;
 public:
     void update() override;
     void handleInput() override{}

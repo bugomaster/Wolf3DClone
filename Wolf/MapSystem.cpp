@@ -62,66 +62,127 @@ void MapSystem::update(World* world) {
 	}
 
 }
-void MapSystem::createCollectibleEntity(World* world, Vector2f worldPos, int collectibleID)
+Entity* MapSystem::createCollectibleEntity(World* world, Vector2f worldPos, int collectibleID)
 {
-	switch (collectibleID)
+	Entity* collectible = world->createEntity();
+	auto collectibleId = static_cast<Collectible>(collectibleID);
+	int frameId = 0;
+	switch (collectibleId)
 	{
-	case 0: {
-		Entity* ammo = world->createEntity();
-		ammo->addComponent<CollectibleComponent>(Collectible::AMMO);
-		ammo->addComponent<PositionComponent>(worldPos, 0.2f);
-		ammo->addComponent<SpritesheetComponent>(SPRSHEET_DATA::AMMO, 4);
-		ammo->addComponent<TextureComponent>(g_assets.collectibleTMap.texture);
-		ammo->addComponent<RayCastDotObjectComponent>();
-		ammo->addComponent<NotCollideableComponent>(std::vector<ComponentID>{getComponentTypeID<PlayerComponent>()});
-		ammo->addComponent<ColNotEffectMovement>();
-
+	case Collectible::AMMO: {
+		frameId = 4;
+	}break;
+	case Collectible::GOLDBOX: {
+		frameId = 10;
+	}break;
+	case Collectible::TROPHIE: {
+		frameId = 9;
+	}break;
+	case Collectible::MEAL: {
+		frameId = 1;
+	}break;
+	case Collectible::MEATBALLS: {
+		frameId = 0;
+	}break;
+	case Collectible::KEY: {
+		frameId = 13;
 	}break;
 	default:
 		break;
 	}
+
+	collectible->addComponent<SpritesheetComponent>(SPRSHEET_DATA::COLLECTIBLESPR[collectibleID], frameId);
+
+	collectible->addComponent<CollectibleComponent>(static_cast<Collectible>(collectibleID));
+	collectible->addComponent<PositionComponent>(worldPos, 0.2f);
+
+	collectible->addComponent<TextureComponent>(g_assets.collectibleTMap.texture);
+	collectible->addComponent<RayCastDotObjectComponent>();
+	collectible->addComponent<NotCollideableComponent>(std::vector<ComponentID>{getComponentTypeID<PlayerComponent>()});
+	collectible->addComponent<ColNotEffectMovement>();
+	return collectible;
+
 }
 
-void MapSystem::createDoorHor(World* world, Vector2f posDoor)
+void MapSystem::createDoorHor(World* world, const Door& door)
 {
+	auto posDoor = door.position.to<float>();
 	posDoor.y += 0.5f;
-	Entity* door = world->createEntity();
-	MapSystem::gridObjectsMap[(int)posDoor.y][(int)posDoor.x] = door;
+	Entity* doorEntity = world->createEntity();
+	MapSystem::gridObjectsMap[(int)posDoor.y][(int)posDoor.x] = doorEntity;
 	//left and right to the door 
 	MapSystem::gridObjectsMap[(int)posDoor.y][(int)posDoor.x + 1]->getComponent<RectFacesComponent>()->faceIDs[0] = 58;
 	MapSystem::gridObjectsMap[(int)posDoor.y][(int)posDoor.x - 1]->getComponent<RectFacesComponent>()->faceIDs[1] = 58;
 
 
-	door->addComponent<PositionComponent>(posDoor)->hitBox = { 0.f,0.f, 1.f,0.01f };
-	door->addComponent<RayCastRectObjectComponent>(Vector2f{ 1.f,0.01f });
-	door->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WALLTMAP, 56);
-	door->addComponent<TextureComponent>(g_assets.wallTMap.texture);
-	door->addComponent<CantCollideWithComponent>(std::vector<ComponentID>
+	doorEntity->addComponent<PositionComponent>(posDoor.to<float>())->hitBox = { 0.f,0.f, 1.f,0.01f };
+	doorEntity->addComponent<RayCastRectObjectComponent>(Vector2f{ 1.f,0.01f });
+	doorEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WALLTMAP, 56);
+	doorEntity->addComponent<TextureComponent>(g_assets.wallTMap.texture);
+	doorEntity->addComponent<CantCollideWithComponent>(std::vector<ComponentID>
 	{ getComponentTypeID<WallComponent>() });
-	door->addComponent<TimerComponent>();
-	door->addComponent<DoorComponent>(Vector2i{1, 0}, 300, posDoor);
+	doorEntity->addComponent<TimerComponent>();
+	doorEntity->addComponent<DoorComponent>(door.dirMove, 300, posDoor.to<float>());
 
 }
-void MapSystem::createDoorVer(World* world, Vector2f posDoor)
+void MapSystem::createDoorVer(World* world, const Door& door)
 {
+	auto posDoor = door.position.to<float>();
 	posDoor.x += 0.5f;
-	Entity* door = world->createEntity();
-	MapSystem::gridObjectsMap[(int)posDoor.y][(int)posDoor.x] = door;
+	Entity* doorEntity = world->createEntity();
+
+	MapSystem::gridObjectsMap[(int)posDoor.y][(int)posDoor.x] = doorEntity;
 	//left and right to the door 
 	MapSystem::gridObjectsMap[(int)posDoor.y - 1][(int)posDoor.x]->getComponent<RectFacesComponent>()->faceIDs[3] = 58;
 	MapSystem::gridObjectsMap[(int)posDoor.y + 1][(int)posDoor.x]->getComponent<RectFacesComponent>()->faceIDs[2] = 58;
 
 
-	door->addComponent<PositionComponent>(posDoor)->hitBox = { 0.f,0.f, 0.01f,1.f };
-	door->addComponent<RayCastRectObjectComponent>(Vector2f{ 0.01f, 1.f });
-	door->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WALLTMAP, 56);
-	door->addComponent<TextureComponent>(g_assets.wallTMap.texture);
+	doorEntity->addComponent<PositionComponent>(posDoor.to<float>())->hitBox = { 0.f,0.f, 0.01f,1.f };
+	doorEntity->addComponent<RayCastRectObjectComponent>(Vector2f{ 0.01f, 1.f });
+	doorEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WALLTMAP, 56);
+	doorEntity->addComponent<TextureComponent>(g_assets.wallTMap.texture);
 
-	door->addComponent<CantCollideWithComponent>(std::vector<ComponentID>
+	doorEntity->addComponent<CantCollideWithComponent>(std::vector<ComponentID>
 	{ getComponentTypeID<WallComponent>() });
 
+	doorEntity->addComponent<TimerComponent>();
+	doorEntity->addComponent<DoorComponent>(door.dirMove, 300, posDoor.to<float>());
+
+}
+void MapSystem::createSecretMoveableWall(World* world, const SecretWall& wall)
+{
+	Entity* door = world->createEntity();
+	MapSystem::gridObjectsMap[wall.position.y][wall.position.x] = door;
+
+	door->addComponent<PositionComponent>(wall.position.to<float>())->hitBox = { 0.f,0.f, 1.f,1.f };
+	door->addComponent<RayCastRectObjectComponent>(Vector2f{ 1.f, 1.f });
+	door->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WALLTMAP, wall.tileID);
+	door->addComponent<TextureComponent>(g_assets.wallTMap.texture);
+
+
 	door->addComponent<TimerComponent>();
-	door->addComponent<DoorComponent>(Vector2i{ 0, -1 }, 300, posDoor);
+	door->addComponent<VelocityComponent>(0.f, 0.f);
+
+	door->addComponent<SecretWallComponent>(wall.position, wall.dirMove);
+
+}
+void MapSystem::createLockGate(World* world, const LockGate& lockGate)
+{
+	Entity* door = world->createEntity();
+	MapSystem::gridObjectsMap[lockGate.position.y][lockGate.position.x] = door;
+
+	door->addComponent<PositionComponent>(lockGate.position.to<float>())->hitBox = { 0.f,0.f, 1.f,1.f };
+	door->addComponent<RayCastRectObjectComponent>(Vector2f{ 1.f, 1.f });
+	door->addComponent<RectFacesComponent>(std::vector<int>{lockGate.tileID, 40, 40, 40});
+
+	door->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WALLTMAP, 0);//no need for tile id cuz rectfacescomp
+	door->addComponent<TextureComponent>(g_assets.wallTMap.texture);
+
+
+	door->addComponent<TimerComponent>();
+	door->addComponent<VelocityComponent>(0.f, 0.f);
+
+	door->addComponent<LockGateComponent>(lockGate.position, 0, lockGate.keyID);
 
 }
 void MapSystem::onAddedToWorld(World* world)
@@ -139,7 +200,7 @@ void MapSystem::onAddedToWorld(World* world)
 			wallBox->addComponent<RectFacesComponent>(
 				std::vector<int> { textureIDWall, textureIDWall, textureIDWall, textureIDWall });
 			wallBox->addComponent<TextureComponent>(g_assets.wallTMap.texture);
-			wallBox->addComponent<PositionComponent>(Vector2f{ (float)x,(float)y})->hitBox = { 0.f,0.f, 1.f,1.f };
+			wallBox->addComponent<PositionComponent>(Vector2f{ (float)x,(float)y })->hitBox = { 0.f,0.f, 1.f,1.f };
 			wallBox->addComponent<WallComponent>();
 			wallBox->addComponent<RayCastRectObjectComponent>(Vector2f{ 1.f,1.f });
 			MapSystem::gridObjectsMap[y][x] = wallBox;
@@ -149,33 +210,33 @@ void MapSystem::onAddedToWorld(World* world)
 	}
 
 	//DOORS
-	for (int y = 0; y < GFX::MAP_H; y++)
+	for (const auto& door : this->gameScene->levelData.doors)
 	{
-		for (int x = 0; x < GFX::MAP_W; x++)
+		if (door.dirMove.x != 0)
 		{
-			int textureIDWall = Map::wallMap[y][x];
-			if (textureIDWall == -1)
-			{
-				createDoorHor(world, Vector2f{ (float)x, (float)y});
-			}
-			if (textureIDWall == -2)
-			{
-				createDoorVer(world, Vector2f{ (float)x, (float)y});
-			}
+			createDoorHor(world, door);
 		}
-
+		else if (door.dirMove.y != 0)
+		{
+			createDoorVer(world, door);
+		}
 	}
-
-	
-
+	for (const auto& secretWall : this->gameScene->levelData.secretWalls)
 	{
-		//Entity* lamp = world->createEntity();
-		//lamp->addComponent<RayCastDotObjectComponent>();
-		//lamp->addComponent<PositionComponent>(Vector2f{ 8.5f,8.5f });
-		//lamp->addComponent<SpritesheetComponent>(SPRSHEET_DATA::BASIC4X4, 3);
-		//lamp->addComponent<TextureComponent>(g_assets.decorationsTMap.texture);
-		//lamp->addComponent<DecorativeObjectComponent>();
-		//lamp->addComponent<NotCollideableComponent>();
+		createSecretMoveableWall(world, secretWall);
+	}
+	for (const auto& lockGate : this->gameScene->levelData.lockGates)
+	{
+		createLockGate(world, lockGate);
+	}
+	for (const auto& collectible : this->gameScene->levelData.collectibles)
+	{
+		createCollectibleEntity(world, collectible.position, (int)collectible.type);
+	}
+	for (const auto& keyData : this->gameScene->levelData.keys)
+	{
+		Entity* keyEntity = createCollectibleEntity(world, keyData.position, (int)Collectible::KEY);
+		keyEntity->addComponent<KeyComponent>(keyData.keyID);
 	}
 
 

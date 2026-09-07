@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "GFX.hpp"
 #include "SpriteSheet.hpp"
-
+#include "LevelData.hpp"
 
 #include <functional>
 #include <vector>
@@ -9,11 +9,6 @@
 
 struct SDL_Texture;
 class Entity;
-enum class Collectible
-{
-    AMMO,
-
-};
 
 struct InputComponent : public Component {
     InputComponent():
@@ -71,9 +66,39 @@ struct PlayerComponent : public Component {
 
     Weapon weapon;
     int faceExpression = 0;
-    int ammo = 1000;
+    int ammo = 500;
     int health = 100;
+    int points = 0;
+    int lives = 3;
+    std::vector<int> keys;
 };
+
+
+struct LockGateComponent : Component {
+
+    LockGateComponent(Vector2i position, int face, int keyID):
+    position(position), face(face), keyID(keyID)
+    {
+
+    }
+
+    Vector2i position; 
+    int face = 0;
+    int keyID = 0;
+    bool open = false;
+
+};
+struct SecretWallComponent : Component {
+    explicit SecretWallComponent(Vector2i startMapCoord,Vector2i moveDir )
+        : prevMapCoord(startMapCoord), moveDir(moveDir)
+    {
+    }
+    Vector2i moveDir;
+    Vector2i prevMapCoord;
+    bool moving = false;
+};
+
+
 struct DoorComponent : Component {
     DoorComponent(Vector2i openDir, int timer, Vector2f originalPos):
     openDir(openDir), timer(timer), originalPos(originalPos)
@@ -208,7 +233,7 @@ struct PositionComponent : Component
     SDL_FRect hitBox = { 0.f,0.f,0.f,0.f };
     SDL_FRect getRelativeHB() const
     {
-        if (hitBox.w != 0.f && hitBox.w != 0.f)
+        if (hitBox.w != 0.f && hitBox.h != 0.f)
         {
             return SDL_FRect{ position.x + hitBox.x, position.y + hitBox.y, hitBox.w, hitBox.h };    
         }
@@ -534,6 +559,10 @@ struct WaitUntilComponent : public Component {
 
 
 //
+struct KeyComponent : public Component {
+    KeyComponent(int keyID):keyID(keyID){}
+    int keyID = 0;
+};
 struct CollectibleComponent : public Component {
     CollectibleComponent(Collectible type) :
         type(type)

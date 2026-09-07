@@ -21,7 +21,7 @@ bool GameScene::initScene() {
     this->finished = false;
 
     world = new World();
-    
+    levelData.loadLevelProperties("Levels/Level_1/level_1.levelproperties");
 
     world->registerSystem<MapSystem>(this);
     world->registerSystem<CallBackSystem>(this);

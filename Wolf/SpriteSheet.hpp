@@ -46,12 +46,43 @@ namespace SPRSHEET_DATA
 		GRIDSIZE, GRIDSIZE,0,0, 1, 0, 16, 1,
 		GRIDSIZE ,GRIDSIZE,4,4 };
 
-	constexpr SpriteSheetData AMMO = {
-		10, 10, 27, 54, 1, 0, 16, 1,
-		GRIDSIZE ,GRIDSIZE,4,4 };
+	//int entityWidth;
+	//int entityHeight;
+	//int entityXPad;
+	//int entityYPad;
 
+	////
+	//int xOffset;
+	//int yOffset;
+	//int gridRowGap;
+	//int gridColGap;
+	//int gridWidth;
+	//int gridHeight;
+	//int rows;
+	//int cols;
 
+	constexpr SpriteSheetData COLLECTIBLESPR[]
+	{
+		// AMMO
+		{20, 20, 22, 54, 1, 0, 16, 1, GRIDSIZE, GRIDSIZE, 4, 4},
 
+		// GOLDBOX
+		{
+		30, 20,16,0, 1, 0, 16, 1,
+		GRIDSIZE ,GRIDSIZE,4,4 },
+
+		// TROPHIE
+		{
+		20, 20,25,0, 1, 0, 16, 1,
+		GRIDSIZE ,GRIDSIZE,4,4 },
+		// MEAL
+		{20, 20, 27, 54, 1, 0, 16, 1, GRIDSIZE, GRIDSIZE, 4, 4},
+
+		// MEATBALLS
+		{20, 20, 27, 54, 1, 0, 16, 1, GRIDSIZE, GRIDSIZE, 4, 4},
+		//KEY
+		{20, 20, 27, 54, 1, 0, 16, 1, GRIDSIZE, GRIDSIZE, 4, 4},
+	};
 
 	//
 	constexpr SpriteSheetData GUARDTMAP = {

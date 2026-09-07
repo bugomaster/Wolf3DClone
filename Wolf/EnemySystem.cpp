@@ -6,6 +6,7 @@
 #include "Map.hpp"
 #include "AssetsLoads.hpp"
 #include "SoundManager.hpp"
+#define DISABLE_ENEMIES
 
 
 float heuristic(PathNode* a, PathNode* b)
@@ -108,17 +109,6 @@ std::vector<Vector2f> AStar(Vector2f start, Vector2f end)
             {
                 continue;
             }
-            // SPECIAL TILES
-            //if (Map::wallMap[ny][nx] < 0)
-            //{
-            //    if (Map::wallMap[ny][nx] == -1 ||
-            //        Map::wallMap[ny][nx] == -2)
-            //    {
-            //        bool doorOpen = MapSystem::gridObjectsMap[ny][nx]->getComponent<DoorComponent>()->open;
-            //        if (!doorOpen)
-            //            continue;
-            //    }
-            //}
 
 
             PathNode* neighbour = getNode(nx, ny);
@@ -190,15 +180,15 @@ bool EnemySystem::seePos(Entity* enemy, Vector2f pos)
             if (Map::wallMap[y][x] != 0)
             {
                 // door -> maybe open
-                if (Map::wallMap[y][x] == -1 || Map::wallMap[y][x] == -2)
-                {
-                    if (MapSystem::gridObjectsMap[y][x] &&
-                        MapSystem::gridObjectsMap[y][x]->hasComponent<DoorComponent>()&&
-                        MapSystem::gridObjectsMap[y][x]->getComponent<DoorComponent>()->open)
-                    {
-                        continue;// its okay its open door
-                    }
-                }
+                //if (Map::wallMap[y][x] == -1 || Map::wallMap[y][x] == -2)
+                //{
+                //    if (MapSystem::gridObjectsMap[y][x] &&
+                //        MapSystem::gridObjectsMap[y][x]->hasComponent<DoorComponent>()&&
+                //        MapSystem::gridObjectsMap[y][x]->getComponent<DoorComponent>()->open)
+                //    {
+                //        continue;// its okay its open door
+                //    }
+                //}
                 return false;// a wall
             }
         }
@@ -565,8 +555,11 @@ void EnemySystem::freeEnemyStates(EnemyState* first)
     }
 }
 
+void EnemySystem::onAddedToWorld(World* world) 
+{
 
-void EnemySystem::onAddedToWorld(World* world) {
+
+#ifndef  DISABLE_ENEMIES
     EnemyState* states = buildEnemyStates();
     this->states = states;
 
@@ -615,6 +608,9 @@ void EnemySystem::onAddedToWorld(World* world) {
 
 
     }
+
+#endif //  
+
 
 
 }

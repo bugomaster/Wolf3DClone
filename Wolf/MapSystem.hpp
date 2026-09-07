@@ -1,6 +1,7 @@
 #pragma once
 #include "System.hpp"
 #include "GFX.hpp"
+#include "LevelData.hpp"
 
 
 class GameScene;
@@ -11,9 +12,11 @@ public:
 
     void update(World* world) override;
     void onAddedToWorld(World* world) override;
-    static void createCollectibleEntity(World* world, Vector2f worldPos, int collectibleID);
-    void createDoorHor(World* world, Vector2f posDoor);
-    void createDoorVer(World* world, Vector2f posDoor);
+    static Entity* createCollectibleEntity(World* world, Vector2f worldPos, int collectibleID);
+    void createDoorHor(World* world, const Door& door);
+    void createDoorVer(World* world, const Door& door);
+    void createSecretMoveableWall(World* world, const SecretWall& wall);
+    void createLockGate(World* world, const LockGate& lockGate);
     static Entity* gridObjectsMap[GFX::MAP_H][GFX::MAP_W];
 private:
     GameScene* gameScene;
