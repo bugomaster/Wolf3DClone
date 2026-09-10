@@ -12,7 +12,7 @@ public:
 
     void update(World* world) override;
     void onAddedToWorld(World* world) override;
-    static Entity* createCollectibleEntity(World* world, Vector2f worldPos, int collectibleID);
+    static Entity* createCollectibleEntity(World* world, Vector2f worldPos, Collectible type);
     void createDoorHor(World* world, const Door& door);
     void createDoorVer(World* world, const Door& door);
     void createSecretMoveableWall(World* world, const SecretWall& wall);

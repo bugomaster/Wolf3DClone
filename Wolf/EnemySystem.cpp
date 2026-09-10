@@ -6,7 +6,7 @@
 #include "Map.hpp"
 #include "AssetsLoads.hpp"
 #include "SoundManager.hpp"
-#define DISABLE_ENEMIES
+//#define DISABLE_ENEMIES
 
 
 float heuristic(PathNode* a, PathNode* b)
@@ -646,7 +646,7 @@ void EnemySystem::update(World* world)
             }
 
             const auto& worldPos = enemy->getComponent<PositionComponent>()->position;
-            MapSystem::createCollectibleEntity(world, worldPos, (int)drop);
+            MapSystem::createCollectibleEntity(world, worldPos, drop);
 
             // Death anim
             {

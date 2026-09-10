@@ -25,10 +25,24 @@ void Textures::loadAll(SDL_Renderer* renderer) {
     success &= guard.load(renderer, "Assets/guard.png");
     success &= weapons.load(renderer, "Assets/weapons.png");
     success &= decorationsTMap.load(renderer, "Assets/Objects.png");
+    success &= decorations2TMap.load(renderer, "Assets/Decorations.png");
+
     success &= collectibleTMap.load(renderer, "Assets/collectibles.png");
     success &= statsBar.load(renderer, "Assets/statsBar.png");
+    success &= keyIconBlue.load(renderer, "Assets/key1icon.png");
+    success &= keyIconGold.load(renderer, "Assets/key2icon.png");
     success &= gunsStatsTMap.load(renderer, "Assets/guns_stats_bar.png");
     success &= facesTMap.load(renderer, "Assets/faceswlf.png");
+
+    success &= menuScene.controlsLogo.load(renderer, "Assets/MenuScene/ControlsLogo.png");
+    success &= menuScene.gameStartImg.load(renderer, "Assets/MenuScene/gameStartImg.png");
+    success &= menuScene.keyIns.load(renderer, "Assets/MenuScene/keyIns.png");
+    success &= menuScene.loadGame.load(renderer, "Assets/MenuScene/LoadGame.png");
+    success &= menuScene.logo.load(renderer, "Assets/MenuScene/Logo.png");
+    success &= menuScene.lvllDiff.load(renderer, "Assets/MenuScene/lvllDiff.png");
+    success &= menuScene.optionPointer.load(renderer, "Assets/MenuScene/optionPointer.png");
+    success &= menuScene.optionsLogo.load(renderer, "Assets/MenuScene/OptionsLogo.png");
+    success &= menuScene.paused.load(renderer, "Assets/MenuScene/Paused.png");
 
 }
 void Textures::destroyAll() {
@@ -36,11 +50,24 @@ void Textures::destroyAll() {
     guard.destroy();
     weapons.destroy();
     decorationsTMap.destroy();
+    decorations2TMap.destroy();
     collectibleTMap.destroy();
     statsBar.destroy();
+    keyIconGold.destroy();
+    keyIconBlue.destroy();
     gunsStatsTMap.destroy();
     facesTMap.destroy();
 
+    //
+    menuScene.controlsLogo.destroy();
+    menuScene.gameStartImg.destroy();
+    menuScene.keyIns.destroy();
+    menuScene.loadGame.destroy();
+    menuScene.logo.destroy();
+    menuScene.lvllDiff.destroy();
+    menuScene.optionPointer.destroy();
+    menuScene.optionsLogo.destroy();
+    menuScene.paused.destroy();
 
 }
 

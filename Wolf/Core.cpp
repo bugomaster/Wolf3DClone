@@ -20,12 +20,12 @@ bool Core::init() {
     audio.init();
 
     //
-    gameScene = std::make_unique<GameScene>(&gameScreen, &gameInput, &audio);
+    menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio);
+    menuScene.get()->initScene();
+    menuScene.get()->firstRun = true;
+    
 
-    //
-
-    this->scene = gameScene.get();
-    scene->initScene();
+    this->scene = menuScene.get();
 
     return success;
 }
@@ -53,17 +53,34 @@ void Core::run() {
 
 
         scene->update();//gameScene tick
-
         if (scene->isFinished())
         {
-            // start new game
-            gameScene = std::make_unique<GameScene>(&gameScreen, &gameInput,&audio);
-            this->scene = gameScene.get();
-            scene->initScene();
+            auto* ptrMenuS = dynamic_cast<MenuScene*>(scene);
+            auto* ptrGameS = dynamic_cast<GameScene*>(scene);
+            if (ptrMenuS)
+            {
+                // start new game
+                if (ptrMenuS->isNewGame()) {
+                    gameScene = std::make_unique<GameScene>(&gameScreen, &gameInput, &audio);
+                    gameScene.get()->initScene();
 
+                }
+                else {
+                    gameScene.get()->setFinished(false);
+                }
+
+
+                this->scene = gameScene.get();
+
+            }
+            else if (ptrGameS)
+            {
+                menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio);
+                menuScene.get()->initScene();
+                menuScene.get()->setPlayerDead(ptrGameS->isPlayerDead());
+                this->scene = menuScene.get();
+            }
         }
-
-        //scene->render();//--> for menuScene
 
         gameScreen.update();
         limitFPS(startTicks, scene->getScreen()->window);
@@ -74,8 +91,10 @@ void Core::run() {
     quit();
 }
 void Core::quit() {
-
-    gameScene->quitScene();
+    if (menuScene)
+        menuScene->quitScene();
+    if (gameScene)
+        gameScene->quitScene();
     g_assets.destroyAll();
     gameScreen.destroy();
     audio.shutdown();

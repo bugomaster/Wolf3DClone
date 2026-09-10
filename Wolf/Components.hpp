@@ -70,7 +70,8 @@ struct PlayerComponent : public Component {
     int health = 100;
     int points = 0;
     int lives = 3;
-    std::vector<int> keys;
+    bool key1 = false;
+    bool key2 = false;
 };
 
 
@@ -85,7 +86,7 @@ struct LockGateComponent : Component {
     Vector2i position; 
     int face = 0;
     int keyID = 0;
-    bool open = false;
+    bool on = false;
 
 };
 struct SecretWallComponent : Component {
@@ -278,7 +279,12 @@ struct RayCastRectObjectComponent : public Component {
 
 };
 struct RayCastDotObjectComponent : public Component {    
-    
+    RayCastDotObjectComponent(bool showIndicatorRect = true):
+    showIndicatorRect(showIndicatorRect)
+    {
+
+    }
+    bool showIndicatorRect = false;
     float screenX;
     float dist;
     float normDist;
@@ -559,10 +565,6 @@ struct WaitUntilComponent : public Component {
 
 
 //
-struct KeyComponent : public Component {
-    KeyComponent(int keyID):keyID(keyID){}
-    int keyID = 0;
-};
 struct CollectibleComponent : public Component {
     CollectibleComponent(Collectible type) :
         type(type)

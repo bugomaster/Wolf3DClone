@@ -25,6 +25,7 @@ private:
     bool  gameIsRunning = true;
     Scene* scene = nullptr; 
     std::unique_ptr<GameScene> gameScene;
+    std::unique_ptr<MenuScene> menuScene;
 
     AppScreen gameScreen;
     Input gameInput;

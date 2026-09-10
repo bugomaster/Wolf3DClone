@@ -3,6 +3,7 @@
 #include "SoundManager.hpp"
 #include "AppWindow.hpp"
 #include "Systems.hpp"
+#include "AssetsLoads.hpp"
 
  
 #include "GameScene.hpp"
@@ -17,9 +18,7 @@ GameScene::GameScene(AppScreen* window, Input* input,SoundManager* audio)
 }
 
 bool GameScene::initScene() {
-
     this->finished = false;
-
     world = new World();
     levelData.loadLevelProperties("Levels/Level_1/level_1.levelproperties");
 
@@ -48,3 +47,155 @@ void GameScene::quitScene(){
     delete world;
     world = nullptr;
 }
+
+
+
+BaseMenu::BaseMenu(AppScreen* window, Input* input, SoundManager* audio):
+    cursorAnim(std::vector<int>{0,1}, 2, 32)
+{
+
+    this->window = window;
+    this->input = input;
+    this->audio = audio;
+}
+bool BaseMenu::initScene() {
+    this->finished = false;
+    return true;
+}
+void BaseMenu::quitScene() {
+
+}
+
+void BaseMenu::handleInput() 
+{
+    if (input->pressed(SDL_SCANCODE_RETURN))
+    {
+        this->finished = true;
+        if (cursorIndex == 3)
+            cursorIndex = -1;
+        return;
+    }
+    else if (input->pressed(SDL_SCANCODE_ESCAPE))
+    {
+        this->finished = true;
+        cursorIndex = -1;
+        return;
+    }
+    else if (input->pressed(SDL_SCANCODE_UP))
+    {
+        cursorIndex -= 1;
+    }
+    else if (input->pressed(SDL_SCANCODE_DOWN))
+    {
+        cursorIndex += 1;
+    }
+    cursorIndex = std::max(cursorIndex, 0);
+    cursorIndex = std::min(cursorIndex, 5);
+}
+void BaseMenu::update()
+{
+    //tick
+    cursorAnim.tick();
+}
+void BaseMenu::render()
+{
+
+    //this->getScreen()->blitTextureScale(g_assets.menuScene.gameStartImg.texture,
+    //    SDL_Rect{ 0,0,GFX::SCREEN_WIDTH ,GFX::SCREEN_HEIGHT });
+    
+    //render cursor 
+
+    int y_padd = 100;
+    this->getScreen()->drawRect(SDL_Rect{ 0,0 ,GFX::SCREEN_WIDTH ,GFX::SCREEN_HEIGHT }, menuBGColor);
+    this->getScreen()->drawRect(SDL_Rect{ 150,50 + y_padd,500 ,500 }, otherBGColor);
+    this->getScreen()->renderText(410, 80 + y_padd, 70, "New Game", COLORS::WHITE);
+    //this->getScreen()->renderText(0, 20 ,20, "Sound", COLORS::WHITE);
+    this->getScreen()->renderText(410, 150 + y_padd, 70, "Control", COLORS::WHITE);
+    this->getScreen()->renderText(410, 220 + y_padd, 70, "Load Game", COLORS::WHITE);
+    this->getScreen()->renderText(410, 290 + y_padd, 70, "Quit", COLORS::WHITE);
+    this->getScreen()->blitPixelsFromTextureScale(g_assets.menuScene.optionPointer.texture,
+        SDL_Rect{ 25 * (cursorAnim.getFrameID()),0,25 ,16 }, 
+        SDL_Rect{ 190, this->cursorIndex * 70 + 60 + y_padd,(int)(70.f * 1.7f) ,70});
+
+    this->getScreen()->blitTextureScale(g_assets.menuScene.optionsLogo.texture,
+        SDL_Rect{ 160,0,400 ,0 });
+    this->getScreen()->blitTextureScale(g_assets.menuScene.keyIns.texture,
+        SDL_Rect{ 160,GFX::SCREEN_HEIGHT-30,450 ,0 });
+
+}
+
+
+
+
+MenuScene::MenuScene(AppScreen* window, Input* input, SoundManager* audio):data({})
+{
+
+    this->window = window;
+    this->input = input;
+    this->audio = audio;
+}
+bool MenuScene::initScene() {
+    this->finished = false;
+    this->deadPlayer = false;
+    data.currentLvl = 1;
+    this->newGame = false;
+    this->firstRun = false;
+    data.highestScore = 0;
+    this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio);
+    return true;
+}
+void MenuScene::handleInput()
+{
+}
+void MenuScene::update()
+{
+    this->menuScene.get()->handleInput();
+    this->menuScene.get()->update();
+    auto* ptrScene = this->menuScene.get();
+    if (ptrScene->isFinished())
+    {
+        auto* baseMenuPtr = dynamic_cast<BaseMenu*>(ptrScene);
+        if (baseMenuPtr)// Options Menu
+        {
+            switch (baseMenuPtr->getOptionIndex())
+            {
+            //escape/quit
+            case -1: {
+                if (!this->deadPlayer && !firstRun)//can continue?
+                {
+                    this->finished = true;
+                    newGame = false;
+                }
+                else// i am not done with you
+                {
+                    ptrScene->setFinished(false);
+                    return;
+                }
+            }break;
+            //new game
+            case 0: {
+                this->finished = true;
+                newGame = true;
+            }break;
+            //sound
+            case 1: {}break;
+            //control
+            case 2: {}break;
+            default:
+                break;
+            }
+        }
+        ptrScene->quitScene();
+    }
+    this->menuScene.get()->render();
+
+}
+void MenuScene::render() {
+
+
+}
+void MenuScene::quitScene() {
+
+
+}
+

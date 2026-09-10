@@ -75,21 +75,31 @@ const T& getRandomFromVector(const std::vector<T>& vec)
     std::uniform_int_distribution<std::size_t> dist(0, vec.size() - 1);
     return vec[dist(gen)];
 }
+
 template <typename T>
 inline void println(const T& line, bool randomColor = false) {
+    using Type = std::remove_cvref_t<T>;
+    std::string strLine;
+    if constexpr (std::is_same_v<Type, Vector2f>) {
+        strLine = std::to_string(line.x) + ", " + std::to_string(line.y);
+    }
+    else {
+        strLine = line;
+    }
     if (randomColor)
     {
-        int color = TERMINAL_COLORS[
-            getRandomRange(0, (int)(sizeof(TERMINAL_COLORS) / sizeof(TERMINAL_COLORS[0])) - 1)
-        ];
-
-        std::cout << "\033[" << color << "m" << line << "\033[0m\n";
+        int color = TERMINAL_COLORS
+        [getRandomRange(0, (int)(sizeof(TERMINAL_COLORS) / sizeof(TERMINAL_COLORS[0])) - 1)];
+        std::cout << "\033[" << color << "m" << strLine << "\033[0m\n";
     }
     else
-        std::cout << line << '\n';
-
+    {
+        std::cout << strLine << "\n";
+    }
 
 }
+
+
 inline void printRect(const SDL_FRect& rect, bool randomColor = false) {
     std::cout << "x: " << rect.x << ", y:" << rect.y << ", w:" << rect.w << ", h:" << rect.h << std::endl;
 

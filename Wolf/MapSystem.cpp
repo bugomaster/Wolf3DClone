@@ -62,12 +62,11 @@ void MapSystem::update(World* world) {
 	}
 
 }
-Entity* MapSystem::createCollectibleEntity(World* world, Vector2f worldPos, int collectibleID)
+Entity* MapSystem::createCollectibleEntity(World* world, Vector2f worldPos, Collectible type)
 {
 	Entity* collectible = world->createEntity();
-	auto collectibleId = static_cast<Collectible>(collectibleID);
 	int frameId = 0;
-	switch (collectibleId)
+	switch (type)
 	{
 	case Collectible::AMMO: {
 		frameId = 4;
@@ -84,16 +83,19 @@ Entity* MapSystem::createCollectibleEntity(World* world, Vector2f worldPos, int 
 	case Collectible::MEATBALLS: {
 		frameId = 0;
 	}break;
-	case Collectible::KEY: {
+	case Collectible::BLUEKEY: {
 		frameId = 13;
+	}break;
+	case Collectible::GOLDKEY: {
+		frameId = 14;
 	}break;
 	default:
 		break;
 	}
 
-	collectible->addComponent<SpritesheetComponent>(SPRSHEET_DATA::COLLECTIBLESPR[collectibleID], frameId);
+	collectible->addComponent<SpritesheetComponent>(SPRSHEET_DATA::COLLECTIBLESPR[(int)(type)], frameId);
 
-	collectible->addComponent<CollectibleComponent>(static_cast<Collectible>(collectibleID));
+	collectible->addComponent<CollectibleComponent>(type);
 	collectible->addComponent<PositionComponent>(worldPos, 0.2f);
 
 	collectible->addComponent<TextureComponent>(g_assets.collectibleTMap.texture);
@@ -231,12 +233,45 @@ void MapSystem::onAddedToWorld(World* world)
 	}
 	for (const auto& collectible : this->gameScene->levelData.collectibles)
 	{
-		createCollectibleEntity(world, collectible.position, (int)collectible.type);
+		createCollectibleEntity(world, collectible.position, collectible.type);
 	}
 	for (const auto& keyData : this->gameScene->levelData.keys)
 	{
-		Entity* keyEntity = createCollectibleEntity(world, keyData.position, (int)Collectible::KEY);
-		keyEntity->addComponent<KeyComponent>(keyData.keyID);
+		Collectible type = Collectible::BLUEKEY;
+		if (keyData.keyID == 2)
+			type = Collectible::GOLDKEY;
+		Entity* keyEntity = createCollectibleEntity(world, keyData.position, type);
+	}
+	for (const auto& decoration : this->gameScene->levelData.decorations)
+	{
+		Entity* decorationEntity = world->createEntity();
+		int frameId = 0;
+		float radius = 0.2f;
+		switch (decoration.type)
+		{
+		case Decoration::LAMP:{
+			frameId = 2;
+		}break;
+		case Decoration::TREE:{
+			frameId = 5;
+		}break;
+		case Decoration::FLAG:{
+			frameId = 17;
+		}break;
+		case Decoration::TABLE:{
+			radius = 0.4f;
+			frameId = 9;
+		}break;
+		default:
+			break;
+		}
+
+		decorationEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::DECORATIONSPR[(int)(decoration.type)], frameId);
+		decorationEntity->addComponent<PositionComponent>(decoration.position, radius);
+		decorationEntity->addComponent<TextureComponent>(g_assets.decorations2TMap.texture);
+		decorationEntity->addComponent<RayCastDotObjectComponent>(false);
+
+
 	}
 
 

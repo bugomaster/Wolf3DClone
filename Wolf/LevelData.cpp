@@ -257,6 +257,45 @@ bool LevelData::loadLevelProperties(const std::string& path) {
                 this->keys.push_back(key);
             }
         }
+        else if (key == "DECORATIONS")
+        {
+
+            std::string entry;
+            auto parts = splitByString(value, ";,", 0);
+
+            for (auto part : parts)
+            {
+                entry = part;
+                entry = trim(entry);
+
+                if (entry.empty())
+                    continue;
+
+                DecorationData decoration{};
+                char type[32]{};
+
+                sscanf_s(
+                    entry.c_str(),
+                    "(%f,%f) %31s",
+                    &decoration.position.x,
+                    &decoration.position.y,
+                    type,
+                    (unsigned)_countof(type)
+
+                );
+                if (strcmp(type, "LAMP") == 0)
+                    decoration.type = Decoration::LAMP;
+                else if (strcmp(type, "TREE") == 0)
+                    decoration.type = Decoration::TREE;
+                else if (strcmp(type, "FLAG") == 0)
+                    decoration.type = Decoration::FLAG;
+                else if (strcmp(type, "TABLE") == 0)
+                    decoration.type = Decoration::TABLE;
+
+
+                this->decorations.push_back(decoration);
+            }
+        }
 
 
     }

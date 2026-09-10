@@ -11,7 +11,22 @@ public:
     bool load(SDL_Renderer* renderer, const std::string& path);
     void destroy();
 
+};    
+
+struct MenuSceneAssets
+{
+public:
+    ImgTexture controlsLogo;
+    ImgTexture gameStartImg;
+    ImgTexture keyIns;
+    ImgTexture loadGame;
+    ImgTexture logo;
+    ImgTexture lvllDiff;
+    ImgTexture optionPointer;
+    ImgTexture optionsLogo;
+    ImgTexture paused;
 };
+
 
 struct Textures
 {
@@ -21,10 +36,13 @@ public:
     ImgTexture weapons;
     ImgTexture decorationsTMap;
     ImgTexture collectibleTMap;
+    ImgTexture decorations2TMap;
     ImgTexture statsBar;
+    ImgTexture keyIconBlue;
+    ImgTexture keyIconGold;
     ImgTexture facesTMap;
     ImgTexture gunsStatsTMap;
-
+    MenuSceneAssets menuScene;
 
 
     void loadAll(SDL_Renderer* renderer);

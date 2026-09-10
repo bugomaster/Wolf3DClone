@@ -14,8 +14,6 @@
 /*
 TODO:
 GENERAL:
-trophies and collectibles
-decorations -> lamps, small trees, flags , dining tables
 
 cutscenes between levels
 menu
@@ -132,8 +130,13 @@ void PlayerSystem::updateInput() {
 
 
     inputComp->reset();
-    if (gameScene->getInput()->held(SDL_SCANCODE_R))
-        gameScene->setFinished(true);
+    auto* playerComp = playerEntity->getComponent<PlayerComponent>();
+    if (playerComp->health < 1)
+    {
+        //todo disable death here!
+        this->gameScene->setFinished(true);
+        this->gameScene->setPlayerDead(true);
+    }
     if (gameScene->getInput()->held(SDL_SCANCODE_LEFT))
         inputComp->left = true;
     if (gameScene->getInput()->held(SDL_SCANCODE_RIGHT))
@@ -146,10 +149,20 @@ void PlayerSystem::updateInput() {
         inputComp->w = true;
     if (gameScene->getInput()->held(SDL_SCANCODE_S))
         inputComp->s = true;
-    if (gameScene->getInput()->held(SDL_SCANCODE_E))
+    if (gameScene->getInput()->pressed(SDL_SCANCODE_E))
         inputComp->e = true;
+    if (gameScene->getInput()->pressed(SDL_SCANCODE_ESCAPE)) 
+        this->gameScene->setFinished(true);
     if (gameScene->getInput()->mousePressed(SDL_BUTTON_LEFT))
         inputComp->space = true;
+
+    {
+        if (gameScene->getInput()->pressed(SDL_SCANCODE_P))
+        {
+            auto* posComp = playerEntity->getComponent<PositionComponent>();
+            println(posComp->position, true);
+        }
+    }
 
 }
 
@@ -163,13 +176,7 @@ void PlayerSystem::updateDoorOpen() {
         Entity* wall = MapSystem::gridObjectsMap[mid.rayHit.mapCoords.y][mid.rayHit.mapCoords.x];
         if (!wall)
             return;
-        if (inputComp->e && wall->hasComponent<DoorComponent>())//open door
-        {
-            auto* doorComp = wall->getComponent<DoorComponent>();
-            if (!doorComp->open)
-                doorComp->opening = true;
-        }
-        else if (wall->hasComponent<SecretWallComponent>())
+        if (wall->hasComponent<SecretWallComponent>())
         {
             auto* wallComp = wall->getComponent<SecretWallComponent>();
             if (mid.rayHit.dist < 0.5f && !wallComp->moving)
@@ -178,38 +185,43 @@ void PlayerSystem::updateDoorOpen() {
                 auto* wallComp = wall->getComponent<SecretWallComponent>();
                 wall->getComponent<VelocityComponent>()->dx = 0.01f;
                 wall->getComponent<TimerComponent>()->addTimer(1, [wallComp](Entity* wall)
-                {
-                    wall->getComponent<VelocityComponent>()->dx = 0.f;
-                    wallComp->moving = false;
+                    {
+                        wall->getComponent<VelocityComponent>()->dx = 0.f;
+                        wallComp->moving = false;
 
 
-                    auto* posWall = wall->getComponent<PositionComponent>();
-                    Vector2i currentPosI = { (int)posWall->position.x , (int)posWall->position.y };
-                    Vector2i prevPosI = wallComp->prevMapCoord;
+                        auto* posWall = wall->getComponent<PositionComponent>();
+                        Vector2i currentPosI = { (int)posWall->position.x , (int)posWall->position.y };
+                        Vector2i prevPosI = wallComp->prevMapCoord;
 
-                    if (prevPosI != currentPosI) {
-                        //gridObjectsMap switch
-                        {
-                            const auto valSwitch = MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x];
-                            MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x] =
-                                MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x];
-                            MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x] = valSwitch;
+                        if (prevPosI != currentPosI) {
+                            //gridObjectsMap switch
+                            {
+                                const auto valSwitch = MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x];
+                                MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x] =
+                                    MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x];
+                                MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x] = valSwitch;
+                            }
+                            wallComp->prevMapCoord = currentPosI;
                         }
-                        wallComp->prevMapCoord = currentPosI;
-                    }
-                });
+                    });
             }
 
         }
-        else if (inputComp->e 
-                    && wall->hasComponent<LockGateComponent>()
-                    && mid.rayHit.dist < 1.5f)
+        else if (inputComp->e && wall->hasComponent<DoorComponent>())//open door
+        {
+            auto* doorComp = wall->getComponent<DoorComponent>();
+            if (!doorComp->open)
+                doorComp->opening = true;
+        }
+        else if (inputComp->e && wall->hasComponent<LockGateComponent>() && mid.rayHit.dist < 1.5f)
         {
             auto* lockComp = wall->getComponent<LockGateComponent>();
-            if (!lockComp->open &&
-                std::find(playerComp->keys.begin(), playerComp->keys.end(), lockComp->keyID) != playerComp->keys.end())
+            if (!lockComp->on &&
+                ((lockComp->keyID == 1 && playerComp->key1) ||
+                (lockComp->keyID == 2 && playerComp->key2) ))
             {
-                lockComp->open = true;
+                lockComp->on = true;
                 wall->getComponent<RectFacesComponent>()->faceIDs.at(0) = 43;// open texture
             }
         }
@@ -409,11 +421,17 @@ void PlayerSystem::checkCollectibleCollision(World* world , MoveData& moveData)
                 gameScene->getAudio()->playSound("ammo");
                 playerComp->health += 20;
             }break;
-            case Collectible::KEY:
+            case Collectible::BLUEKEY:
             {
                 gameScene->getAudio()->playSound("ammo");
-                playerComp->keys.push_back(col.entity->getComponent<KeyComponent>()->keyID);//key id
+                playerComp->key1 = true;
             }break;
+            case Collectible::GOLDKEY:
+            {
+                gameScene->getAudio()->playSound("ammo");
+                playerComp->key2 = true;
+            }break;
+
             default:
                 break;
             }

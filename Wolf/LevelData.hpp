@@ -8,7 +8,8 @@ enum class Collectible
     TROPHIE,
     MEAL,
     MEATBALLS,
-    KEY,
+    BLUEKEY,
+    GOLDKEY,
 };
 struct CollectibleData
 {
@@ -20,6 +21,18 @@ struct KeyData
 {
     Vector2f position;
     int keyID;
+};
+enum class Decoration
+{
+    LAMP,
+    TREE,
+    FLAG,
+    TABLE
+};
+struct DecorationData
+{
+    Vector2f position;
+    Decoration type;
 };
 
 
@@ -56,6 +69,7 @@ struct LevelData
     std::vector<LockGate> lockGates;
     std::vector<CollectibleData> collectibles;
     std::vector<KeyData> keys;
+    std::vector<DecorationData> decorations;
 
     bool loadLevelProperties(const std::string& path);
 };

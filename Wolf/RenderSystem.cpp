@@ -28,7 +28,7 @@ void RenderSystem::renderPlayerStats()
     //lives
     scene->getScreen()->renderText(280, 560, 70, std::to_string(playerComp->lives), COLORS::FONT);
 
-
+    
     //
     Vector2i tMapPicPos = { 0,0 };
     float scale = 3.f;
@@ -60,6 +60,15 @@ void RenderSystem::renderPlayerStats()
         scene->getScreen()->blitPixelsFromTextureScale(g_assets.gunsStatsTMap.texture, srcRect, dstRect);
 
     }
+    dstRect.w = 17;
+    dstRect.h = 0;
+    dstRect.x -= 20;
+
+    if (playerComp->key1)
+        scene->getScreen()->blitTextureScale(g_assets.keyIconBlue.texture, dstRect);
+    if (playerComp->key2)
+        scene->getScreen()->blitTextureScale(g_assets.keyIconGold.texture, dstRect);
+
     // face
     {
         tMapPicPos = { 0, 0 };
@@ -128,7 +137,7 @@ void RenderSystem::drawBackground() {
 
     // Floor
     SDL_Rect floor = {0,GFX::SCREEN_HEIGHT / 2 + screenOffset,GFX::SCREEN_WIDTH,GFX::SCREEN_HEIGHT / 2 - screenOffset};
-    scene->getScreen()->drawRect(floor, SDL_Color{ 40, 40, 40, 255});
+    scene->getScreen()->drawRect(floor, SDL_Color{ 124, 124, 124, 255});
 
 
 }
@@ -191,8 +200,10 @@ void RenderSystem::renderDotEntity(Entity* entity) {
             targetRect.x = CleftX + ratioPadX * rayCastObj->proj;
             targetRect.y = y + (rayCastObj->proj - targetRect.h);
 
-
-            scene->getScreen()->drawRect(targetRect,COLORS::BLACK, false, 3);
+            if (rayCastObj->showIndicatorRect)
+            {
+                scene->getScreen()->drawRect(targetRect, COLORS::BLACK, false, 3);
+            }
 
         }
 
