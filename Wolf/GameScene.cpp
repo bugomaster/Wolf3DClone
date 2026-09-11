@@ -100,9 +100,6 @@ void BaseMenu::update()
 void BaseMenu::render()
 {
 
-    //this->getScreen()->blitTextureScale(g_assets.menuScene.gameStartImg.texture,
-    //    SDL_Rect{ 0,0,GFX::SCREEN_WIDTH ,GFX::SCREEN_HEIGHT });
-    
     //render cursor 
 
     int y_padd = 100;
@@ -125,6 +122,46 @@ void BaseMenu::render()
 }
 
 
+OpenScreen::OpenScreen(AppScreen* window, Input* input, SoundManager* audio)
+{
+
+    this->window = window;
+    this->input = input;
+    this->audio = audio;
+}
+bool OpenScreen::initScene() {
+    this->finished = false;
+    return true;
+}
+void OpenScreen::quitScene() {
+
+}
+
+void OpenScreen::handleInput()
+{
+    if (input->pressed(SDL_SCANCODE_RETURN))
+    {
+        this->fadeScale = 1;
+    }
+}
+void OpenScreen::update()
+{
+    if (fadeScale >= 1)
+    {
+        fadeScale+=4;
+    }
+    if (fadeScale > 255)
+    {
+        finished = true;
+    }
+}
+void OpenScreen::render()
+{
+    this->getScreen()->blitTextureScale(g_assets.menuScene.gameStartImg.texture, SDL_Rect{ 0,0,GFX::SCREEN_WIDTH ,GFX::SCREEN_HEIGHT });
+    this->getScreen()->drawRect(SDL_Rect{0,0, GFX::SCREEN_WIDTH, GFX::SCREEN_HEIGHT}, SDL_Color{0,0,0,(unsigned char)(fadeScale)});
+}
+
+
 
 
 MenuScene::MenuScene(AppScreen* window, Input* input, SoundManager* audio):data({})
@@ -141,6 +178,7 @@ bool MenuScene::initScene() {
     this->newGame = false;
     this->firstRun = false;
     data.highestScore = 0;
+    //this->menuScene = std::make_unique<OpenScreen>(this->window, this->input, this->audio);
     this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio);
     return true;
 }
@@ -155,6 +193,7 @@ void MenuScene::update()
     if (ptrScene->isFinished())
     {
         auto* baseMenuPtr = dynamic_cast<BaseMenu*>(ptrScene);
+        auto* openScreenPtr = dynamic_cast<OpenScreen*>(ptrScene);
         if (baseMenuPtr)// Options Menu
         {
             switch (baseMenuPtr->getOptionIndex())
@@ -185,7 +224,11 @@ void MenuScene::update()
                 break;
             }
         }
-        ptrScene->quitScene();
+        else if(openScreenPtr)
+        {
+            ptrScene->quitScene();
+            this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio);
+        }
     }
     this->menuScene.get()->render();
 

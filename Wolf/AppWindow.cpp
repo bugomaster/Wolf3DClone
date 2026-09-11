@@ -46,6 +46,9 @@ bool AppScreen::init() {
 
     renderer = SDL_CreateRenderer(window, -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+
 
     if (!renderer) {
         std::cout << "Renderer creation failed: " << SDL_GetError() << std::endl;

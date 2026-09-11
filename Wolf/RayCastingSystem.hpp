@@ -30,7 +30,7 @@ struct ObjectRayHit
 {
     RayHit rayHit;
     BoxFace face;
-    Entity* entity;
+    EntityID entityID = 0;
 };
 
 class RayCastingSystem : public System {

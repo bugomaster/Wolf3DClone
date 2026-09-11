@@ -42,6 +42,7 @@ public:
     ImgTexture keyIconGold;
     ImgTexture facesTMap;
     ImgTexture gunsStatsTMap;
+    ImgTexture bloodTMap;
     MenuSceneAssets menuScene;
 
 

@@ -33,6 +33,7 @@ void Textures::loadAll(SDL_Renderer* renderer) {
     success &= keyIconGold.load(renderer, "Assets/key2icon.png");
     success &= gunsStatsTMap.load(renderer, "Assets/guns_stats_bar.png");
     success &= facesTMap.load(renderer, "Assets/faceswlf.png");
+    success &= bloodTMap.load(renderer, "Assets/bloodTMap.png");
 
     success &= menuScene.controlsLogo.load(renderer, "Assets/MenuScene/ControlsLogo.png");
     success &= menuScene.gameStartImg.load(renderer, "Assets/MenuScene/gameStartImg.png");
@@ -57,6 +58,7 @@ void Textures::destroyAll() {
     keyIconBlue.destroy();
     gunsStatsTMap.destroy();
     facesTMap.destroy();
+    bloodTMap.destroy();
 
     //
     menuScene.controlsLogo.destroy();

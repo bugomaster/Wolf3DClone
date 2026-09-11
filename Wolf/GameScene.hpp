@@ -83,6 +83,21 @@ private:
     const SDL_Color otherBGColor = { 88, 0,0 ,255 };
 };
 
+class OpenScreen : public Scene {
+public:
+    OpenScreen(AppScreen* window, Input* input, SoundManager* audio);
+
+public:
+    void update() override;
+    void handleInput() override;
+    void render() override;
+    bool initScene() override;
+    void quitScene() override;
+
+private:
+    int fadeScale = 0;
+};
+
 
 class MenuScene : public Scene {
 public:

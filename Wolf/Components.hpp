@@ -361,7 +361,7 @@ struct EnemyComponent : public Component
         switch (type)
         {
         case EnemyType::GUARD:
-            this->lives = 1;
+            this->lives = 3;
             break;
         default:
             break;
@@ -572,6 +572,8 @@ struct CollectibleComponent : public Component {
     }
     Collectible type;
 };
+
+//for arbitrary instant kill
 struct KillEnemyComponent : public Component {
 
     KillEnemyComponent(Collectible drop) :

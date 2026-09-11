@@ -46,6 +46,12 @@ namespace SPRSHEET_DATA
 		GRIDSIZE, GRIDSIZE,0,0, 1, 0, 16, 1,
 		GRIDSIZE ,GRIDSIZE,4,4 };
 
+
+	constexpr SpriteSheetData BLOOD = {
+	GRIDSIZE, GRIDSIZE,0,0, 0, 0, 0, 0,
+	GRIDSIZE ,GRIDSIZE,1,3 };
+
+
 	//int entityWidth;
 	//int entityHeight;
 	//int entityXPad;
@@ -102,7 +108,7 @@ namespace SPRSHEET_DATA
 		22, GRIDSIZE, 22, 0, 0, 0, 1, 1,
 		GRIDSIZE ,GRIDSIZE,8,8 };
 	constexpr SpriteSheetData DEAD_GUARDTMAP = {
-		GRIDSIZE, 22, 0, 42, 0, 0, 1, 1,
+		40, 12, 20, 42, 0, 0, 1, 1,
 		GRIDSIZE ,GRIDSIZE,8,8 };
 
 

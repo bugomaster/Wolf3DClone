@@ -134,8 +134,8 @@ void PlayerSystem::updateInput() {
     if (playerComp->health < 1)
     {
         //todo disable death here!
-        this->gameScene->setFinished(true);
-        this->gameScene->setPlayerDead(true);
+        //this->gameScene->setFinished(true);
+        //this->gameScene->setPlayerDead(true);
     }
     if (gameScene->getInput()->held(SDL_SCANCODE_LEFT))
         inputComp->left = true;
@@ -171,7 +171,8 @@ void PlayerSystem::updateDoorOpen() {
     auto* inputComp = playerEntity->getComponent<InputComponent>();
     auto* playerComp = playerEntity->getComponent<PlayerComponent>();
     auto mid = RayCastingSystem::middleRay;
-    if (mid.entity && mid.rayHit.dist < 3.f)// middle ray -> points to object 
+    Entity* midEntity = this->gameScene->world->getEntity(mid.entityID);
+    if (midEntity && mid.rayHit.dist < 3.f)// middle ray -> points to object 
     {
         Entity* wall = MapSystem::gridObjectsMap[mid.rayHit.mapCoords.y][mid.rayHit.mapCoords.x];
         if (!wall)
@@ -280,13 +281,31 @@ void PlayerSystem::updateShooting() {
 
 
             // if hit enemy
-            if (RayCastingSystem::middleRay.entity)
+            Entity* midEntity = this->gameScene->world->getEntity(RayCastingSystem::middleRay.entityID);
+            if (midEntity)
             {
-                auto* enemyEntity = RayCastingSystem::middleRay.entity;
-                auto* enemyComp = enemyEntity->getComponent<EnemyComponent>();
+                auto* enemyComp = midEntity->getComponent<EnemyComponent>();
                 if (enemyComp && RayCastingSystem::middleRay.rayHit.dist < GFX::MAX_SHOOT_RANGE)
                 {
                     enemyComp->lives--;
+                    Entity* bloodEntity = this->gameScene->world->createEntity();
+                    bloodEntity->addComponent<PositionComponent>(midEntity->getComponent<PositionComponent>()->position);
+                    bloodEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::BLOOD, 0);
+                    auto shuffle = [](const std::vector<int>& vtr) {
+                        std::vector<int> result = vtr;
+
+                        for (int i = result.size() - 1; i > 0; --i) {
+                            int j = getRandomRange(0, i);
+                            std::swap(result[i], result[j]);
+                        }
+
+                        return result;
+                        
+                    };
+                    bloodEntity->addComponent<AnimationComponent>(shuffle({0,1,2}), 8, false);
+                    bloodEntity->addComponent<TextureComponent>(g_assets.bloodTMap.texture);
+                    bloodEntity->addComponent<RayCastDotObjectComponent>(false);
+                    bloodEntity->addComponent<DestroyDelayComponent>(24);
                 }
             }
 

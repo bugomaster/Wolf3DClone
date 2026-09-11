@@ -138,15 +138,24 @@ struct Component {
 using ComponentArray = std::array<Component*, MAX_COMPONENTS>;
 using ComponentBitset = std::bitset<MAX_COMPONENTS>;
 
+using EntityID = std::uint32_t;
 
 class Entity {
 public:
 
 
-    Entity()
+    Entity(EntityID id)
+        : id(id)
     {
         componentBitset.reset();
     }
+
+    EntityID getID() const {
+        return id;
+    }
+
+
+
     template<typename... Components>
     bool hasComponent() const {
         return (componentBitset[getComponentTypeID<Components>()] && ...);
@@ -194,9 +203,11 @@ public:
         return this->componentBitset;
     }
 private:
-    std::array<std::unique_ptr<Component>, MAX_COMPONENTS> components;
+    EntityID id;
 
+    std::array<std::unique_ptr<Component>, MAX_COMPONENTS> components;
     ComponentBitset componentBitset;
+
 };
 
 
@@ -216,14 +227,8 @@ public:
 
     std::vector<Entity*> pendingEntities;
     Entity* createEntity() {
-        Entity* e = new Entity();
+        Entity* e = new Entity(nextEntityID++);
         pendingEntities.push_back(e);
-        return e;
-    }
-
-    Entity* createImmidiateEntity() {
-        Entity* e = new Entity();
-        entities.push_back(e);
         return e;
     }
 
@@ -305,7 +310,20 @@ public:
             }
         }
     }
+    Entity* getEntity(EntityID id)
+    {
+        for (Entity* entity : entities)
+        {
+            if (entity->getID() == id)
+                return entity;
+        }
+
+        return nullptr;
+    }
+
 private:
+    EntityID nextEntityID = 1;
+
     std::vector<Entity*> entities;
     std::vector<Entity*> entitiesWithPos;
 

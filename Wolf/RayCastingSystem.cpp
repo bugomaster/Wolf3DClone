@@ -308,7 +308,7 @@ void RayCastingSystem::castRays(World* world)
 
                     if (!bestObject.rayHit.hit || corrected < bestObject.rayHit.dist)
                     {
-                        hit.entity = entity;
+                        hit.entityID = entity->getID();
                         bestObject = hit;
                     }
                 }
@@ -318,10 +318,14 @@ void RayCastingSystem::castRays(World* world)
             objectRays[ray] = bestObject;
             if (ray == GFX::NUM_RAYS / 2)//if middle ray
             {
-                auto* pos = bestObject.entity->getComponent<PositionComponent>();
-                middleRay = bestObject;
-                middleRay.rayHit.mapCoords = Vector2i
-                { (int)(pos->position.x),(int)(pos->position.y) };
+                Entity* midEntity = world->getEntity(bestObject.entityID);
+                if (midEntity)
+                {
+                    auto* pos = midEntity->getComponent<PositionComponent>();
+                    middleRay = bestObject;
+                    middleRay.rayHit.mapCoords = Vector2i{ (int)(pos->position.x),(int)(pos->position.y) };
+
+                }
 
             }
 
@@ -411,7 +415,7 @@ void RayCastingSystem::updateDotObjectRays(World* world) {
             {
                 if (!middleRay.rayHit.hit || rayCastObj->dist < middleRay.rayHit.dist)
                 {
-                    middleRay.entity = entity;
+                    middleRay.entityID = entity->getID();
                     middleRay.rayHit.dist = rayCastObj->dist;
                     middleRay.rayHit.hit = true;
                 }

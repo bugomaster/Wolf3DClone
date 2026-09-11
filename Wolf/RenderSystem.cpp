@@ -12,21 +12,21 @@
 void RenderSystem::renderPlayerStats() 
 {
 
-    auto* playerComp = scene->playerEntity->getComponent<PlayerComponent>();
+    auto* playerComp = gameScene->playerEntity->getComponent<PlayerComponent>();
     SDL_Rect dstRect = {0, GFX::SCREEN_HEIGHT - 100, GFX::SCREEN_WIDTH, 100};
-    scene->getScreen()->blitTextureScale(g_assets.statsBar.texture, dstRect);
+    gameScene->getScreen()->blitTextureScale(g_assets.statsBar.texture, dstRect);
 
     std::string ammoText = std::to_string(playerComp->ammo);
     if (playerComp->ammo > 99)
         ammoText = "99";
     //ammo
-    scene->getScreen()->renderText(560, 560, 70, ammoText, COLORS::FONT);
+    gameScene->getScreen()->renderText(560, 560, 70, ammoText, COLORS::FONT);
     //score
-    scene->getScreen()->renderText(160, 560, 70, std::to_string(playerComp->points) , COLORS::FONT);
+    gameScene->getScreen()->renderText(160, 560, 70, std::to_string(playerComp->points) , COLORS::FONT);
     //health
-    scene->getScreen()->renderText(460, 560, 70, std::to_string(playerComp->health), COLORS::FONT);
+    gameScene->getScreen()->renderText(460, 560, 70, std::to_string(playerComp->health), COLORS::FONT);
     //lives
-    scene->getScreen()->renderText(280, 560, 70, std::to_string(playerComp->lives), COLORS::FONT);
+    gameScene->getScreen()->renderText(280, 560, 70, std::to_string(playerComp->lives), COLORS::FONT);
 
     
     //
@@ -57,7 +57,7 @@ void RenderSystem::renderPlayerStats()
         dstRect.h = (int)(22 * scale);
         srcRect.x = tMapPicPos.x;
         srcRect.y = tMapPicPos.y;
-        scene->getScreen()->blitPixelsFromTextureScale(g_assets.gunsStatsTMap.texture, srcRect, dstRect);
+        gameScene->getScreen()->blitPixelsFromTextureScale(g_assets.gunsStatsTMap.texture, srcRect, dstRect);
 
     }
     dstRect.w = 17;
@@ -65,9 +65,9 @@ void RenderSystem::renderPlayerStats()
     dstRect.x -= 20;
 
     if (playerComp->key1)
-        scene->getScreen()->blitTextureScale(g_assets.keyIconBlue.texture, dstRect);
+        gameScene->getScreen()->blitTextureScale(g_assets.keyIconBlue.texture, dstRect);
     if (playerComp->key2)
-        scene->getScreen()->blitTextureScale(g_assets.keyIconGold.texture, dstRect);
+        gameScene->getScreen()->blitTextureScale(g_assets.keyIconGold.texture, dstRect);
 
     // face
     {
@@ -107,7 +107,7 @@ void RenderSystem::renderPlayerStats()
         srcRect.h = 31;
         scale = 3.f;
         dstRect = { 337, 510, (int)(24.f * scale), (int)(31.f * scale)};
-        scene->getScreen()->blitPixelsFromTextureScale(g_assets.facesTMap.texture, srcRect, dstRect);
+        gameScene->getScreen()->blitPixelsFromTextureScale(g_assets.facesTMap.texture, srcRect, dstRect);
         
     }
 
@@ -126,24 +126,24 @@ void RenderSystem::renderPlayerStats()
 void RenderSystem::drawBackground() {
 
     float yScreenOffset =
-        scene->yScreenOffset;
+        gameScene->yScreenOffset;
 
 
     int screenOffset = static_cast<int>(std::round(yScreenOffset));
 
     // Ceiling
     SDL_Rect ceiling = {0,0,GFX::SCREEN_WIDTH,GFX::SCREEN_HEIGHT / 2 + screenOffset };
-    scene->getScreen()->drawRect(ceiling, SDL_Color{ 150, 200, 250, 255 });
+    gameScene->getScreen()->drawRect(ceiling, SDL_Color{ 150, 200, 250, 255 });
 
     // Floor
     SDL_Rect floor = {0,GFX::SCREEN_HEIGHT / 2 + screenOffset,GFX::SCREEN_WIDTH,GFX::SCREEN_HEIGHT / 2 - screenOffset};
-    scene->getScreen()->drawRect(floor, SDL_Color{ 124, 124, 124, 255});
+    gameScene->getScreen()->drawRect(floor, SDL_Color{ 124, 124, 124, 255});
 
 
 }
 void RenderSystem::renderDotEntity(Entity* entity) {
     float cameraYScreen =
-        scene->yScreenOffset;
+        gameScene->yScreenOffset;
     const auto* pos = entity->getComponent<PositionComponent>();
     const auto* rayCastObj = entity->getComponent<RayCastDotObjectComponent>();
     const auto* texture = entity->getComponent<TextureComponent>();
@@ -159,14 +159,17 @@ void RenderSystem::renderDotEntity(Entity* entity) {
         float projHeight = proj;
         float projWidth = proj;
 
-        float gap = projWidth / sprSheet->sprSheetData.gridWidth;
+        float xGap = projWidth / sprSheet->sprSheetData.gridWidth;
 
         int startX = (int)(rayCastObj->screenX - projWidth * 0.5f);
 
         int y = (int)(GFX::SCREEN_HEIGHT * 0.5f - projHeight * 0.5f + cameraYScreen + pos->yScreenOffset);
 
         Vector2i sprSheetCoords = sprSheet->getCoords(pos->getAngle());
-        if (RayCastingSystem::middleRay.entity == entity)
+
+        // BLACK BORDER
+        Entity* midEntity = this->gameScene->world->getEntity(RayCastingSystem::middleRay.entityID);
+        if (midEntity == entity)
         {
 
             auto* spriteSheet = entity->getComponent<SpritesheetComponent>();
@@ -202,11 +205,13 @@ void RenderSystem::renderDotEntity(Entity* entity) {
 
             if (rayCastObj->showIndicatorRect)
             {
-                scene->getScreen()->drawRect(targetRect, COLORS::BLACK, false, 3);
+                gameScene->getScreen()->drawRect(targetRect, COLORS::BLACK, false, 3);
             }
 
         }
 
+
+        // ACTUAL RENDERING
         for (int x = 0; x < (int)projWidth; x++)
         {
             int screenX = startX + x;
@@ -222,7 +227,7 @@ void RenderSystem::renderDotEntity(Entity* entity) {
                     continue;
             }
 
-            int texX = (int)(x / gap);
+            int texX = (int)(x / xGap);
             SDL_Rect srcRect =
             {
                 sprSheetCoords.x + texX,
@@ -239,7 +244,7 @@ void RenderSystem::renderDotEntity(Entity* entity) {
                 (int)projHeight
             };
 
-            scene->getScreen()->blitPixelsFromTextureScale(
+            gameScene->getScreen()->blitPixelsFromTextureScale(
                 texture->texture,
                 srcRect,
                 dstRect);
@@ -259,7 +264,7 @@ void RenderSystem::renderDotEntity(Entity* entity) {
         float projHeight = proj;
         float projWidth = proj;
 
-        float gap = projWidth / texW;
+        float xGap = projWidth / texW;
 
         int startX = (int)(rayCastObj->screenX - projWidth * 0.5f);
 
@@ -283,7 +288,7 @@ void RenderSystem::renderDotEntity(Entity* entity) {
                     continue;
             }
 
-            int texX = (int)(x / gap);
+            int texX = (int)(x / xGap);
             SDL_Rect srcRect =
             {
                 sprSheetCoords.x + texX,
@@ -300,7 +305,7 @@ void RenderSystem::renderDotEntity(Entity* entity) {
                 (int)projHeight
             };
 
-            scene->getScreen()->blitPixelsFromTextureScale(
+            gameScene->getScreen()->blitPixelsFromTextureScale(
                 texture->texture,
                 srcRect,
                 dstRect);
@@ -335,15 +340,15 @@ void RenderSystem::renderDotEntities(World* world)
 
 void RenderSystem::drawWalls() {
     float yScreenOffset =
-        scene->yScreenOffset;
+        gameScene->yScreenOffset;
     static const auto& sprSheetWall = SPRSHEET_DATA::WALLTMAP;
 
     for (int x = 0; x < GFX::NUM_RAYS; x++)
     {
         const auto& objRay = RayCastingSystem::objectRays[x];
-        if (objRay.rayHit.hit)
+        Entity* objEntity = gameScene->world->getEntity(objRay.entityID);
+        if (objRay.rayHit.hit && objEntity)
         {
-            Entity* objEntity = objRay.entity;
 
 
 
@@ -375,7 +380,7 @@ void RenderSystem::drawWalls() {
 
 
             dstRect.y += (int)yScreenOffset;
-            scene->getScreen()->blitPixelsFromTextureScale(g_assets.wallTMap.texture, srcRect, dstRect);
+            gameScene->getScreen()->blitPixelsFromTextureScale(g_assets.wallTMap.texture, srcRect, dstRect);
 
         }
 
@@ -387,7 +392,7 @@ void RenderSystem::renderWeapon()
 {
     int indicatorScale = 4;
 
-    scene->getScreen()->drawRect(
+    gameScene->getScreen()->drawRect(
         SDL_Rect{
             GFX::SCREEN_WIDTH / 2 - indicatorScale / 2,
             GFX::SCREEN_HEIGHT / 2 - indicatorScale / 2,
@@ -399,8 +404,8 @@ void RenderSystem::renderWeapon()
 
 
     //===========
-    auto* sprSheetComp = scene->playerEntity->getComponent<SpritesheetComponent>();
-    auto* texture = scene->playerEntity->getComponent<TextureComponent>();
+    auto* sprSheetComp = gameScene->playerEntity->getComponent<SpritesheetComponent>();
+    auto* texture = gameScene->playerEntity->getComponent<TextureComponent>();
 
     Vector2i sprSheetCoords = sprSheetComp->getCoords();
     SDL_Rect srcRect =
@@ -419,7 +424,7 @@ void RenderSystem::renderWeapon()
         GFX::SCREEN_WIDTH/2 - size/2,GFX::SCREEN_HEIGHT -size - 100 ,
         size ,size
     };
-    scene->getScreen()->blitPixelsFromTextureScale(texture->texture,srcRect,dstRect);
+    gameScene->getScreen()->blitPixelsFromTextureScale(texture->texture,srcRect,dstRect);
 
 
 

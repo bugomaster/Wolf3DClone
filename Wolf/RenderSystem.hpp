@@ -5,8 +5,8 @@ class GameScene;
 class Entity;
 class RenderSystem : public System {
 public:
-    RenderSystem(GameScene* scene) :
-    scene(scene)
+    RenderSystem(GameScene* gameScene) :
+        gameScene(gameScene)
     {}
     void update(World* world) override;
 private:
@@ -17,5 +17,5 @@ private:
     void renderDotEntity(Entity* entity);
     void renderDotEntities(World* world);
 
-    GameScene* scene;
+    GameScene* gameScene;
 };

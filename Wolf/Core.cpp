@@ -22,10 +22,12 @@ bool Core::init() {
     //
     menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio);
     menuScene.get()->initScene();
-    menuScene.get()->firstRun = true;
+    gameScene = std::make_unique<GameScene>(&gameScreen, &gameInput, &audio);
+    gameScene.get()->initScene();
+    //menuScene.get()->firstRun = true;
     
 
-    this->scene = menuScene.get();
+    this->scene = gameScene.get();
 
     return success;
 }
@@ -61,6 +63,10 @@ void Core::run() {
             {
                 // start new game
                 if (ptrMenuS->isNewGame()) {
+                    if (gameScene.get())
+                    {
+                        gameScene.get()->quitScene();
+                    }
                     gameScene = std::make_unique<GameScene>(&gameScreen, &gameInput, &audio);
                     gameScene.get()->initScene();
 

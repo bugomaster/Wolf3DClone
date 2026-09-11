@@ -335,6 +335,7 @@ EnemyState* EnemySystem::buildEnemyStates()
         if (!seePos(enemy, playerPos->position))
         {
             enemyComp->path = AStar(ePos->position, playerPos->position);
+
             println("1");
             enemyComp->iPath = 0;
         }
@@ -389,6 +390,8 @@ EnemyState* EnemySystem::buildEnemyStates()
                     if (!seePlayer)
                     {
                         enemyComp->path = AStar(ePos->position, playerPos->position);
+                        sizePath = (int)enemyComp->path.size();
+
                         println("2");
                         enemyComp->iPath = 0;
 
@@ -420,10 +423,11 @@ EnemyState* EnemySystem::buildEnemyStates()
         else if(!seePlayer && enemyComp->path.size() == 0)// no path and dont see player
         {
             enemyComp->path = AStar(ePos->position, playerPos->position);
+            sizePath = (int)enemyComp->path.size();
+
             println("3");
             enemyComp->iPath = 0;
         }
-
 
 
         if (sizePath == 0 && !enemyComp->walkingStraight)
@@ -565,17 +569,17 @@ void EnemySystem::onAddedToWorld(World* world)
 
 
     auto startPos = Vector2f{ 8.5f,16.5f };
-    static const unsigned long enemiesCount = 10;
+    static const unsigned long enemiesCount = 50;
     bool inWall = false;
     for (size_t i = 0; i < enemiesCount; i++)
     {
         startPos.x = getRandomRange(2.f, 18.f);
         startPos.y = getRandomRange(2.f, 18.f);
         inWall = Map::wallMap[(int)(startPos.y)][(int)(startPos.x)] != 0;
-        inWall &= Map::wallMap[(int)(startPos.y - GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
-        inWall &= Map::wallMap[(int)(startPos.y + GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
-        inWall &= Map::wallMap[(int)(startPos.y)][(int)(startPos.x + GFX::ENEMY_RADIUS)] != 0;
-        inWall &= Map::wallMap[(int)(startPos.y)][(int)(startPos.x - GFX::ENEMY_RADIUS)] != 0;
+        inWall |= Map::wallMap[(int)(startPos.y - GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
+        inWall |= Map::wallMap[(int)(startPos.y + GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
+        inWall |= Map::wallMap[(int)(startPos.y)][(int)(startPos.x + GFX::ENEMY_RADIUS)] != 0;
+        inWall |= Map::wallMap[(int)(startPos.y)][(int)(startPos.x - GFX::ENEMY_RADIUS)] != 0;
         while (inWall)
         {
             inWall = Map::wallMap[(int)(startPos.y)][(int)(startPos.x)] != 0;
@@ -628,6 +632,7 @@ void EnemySystem::update(World* world)
         {
             enemyComp->currentState->onUpdate(enemy);
         }
+        // KILL ENEMY
         if (enemyComp->lives <= 0 || enemy->hasComponent<KillEnemyComponent>())
         {
 
@@ -654,8 +659,8 @@ void EnemySystem::update(World* world)
                 static const int animSpeed = 6;
                 enemy->addComponent<AnimationComponent>(deathAnim, animSpeed, false);
             }
-            int snd = getRandomRange(1, 4);
-            switch (snd)
+            int sound = getRandomRange(1, 4);
+            switch (sound)
             {
             case 1: {
                 scene->getAudio()->playSound("ahh");
