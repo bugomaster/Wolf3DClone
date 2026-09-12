@@ -269,7 +269,7 @@ void MapSystem::onAddedToWorld(World* world)
 		decorationEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::DECORATIONSPR[(int)(decoration.type)], frameId);
 		decorationEntity->addComponent<PositionComponent>(decoration.position, radius);
 		decorationEntity->addComponent<TextureComponent>(g_assets.decorations2TMap.texture);
-		decorationEntity->addComponent<RayCastDotObjectComponent>(false);
+		decorationEntity->addComponent<RayCastDotObjectComponent>();
 
 
 	}

@@ -92,6 +92,7 @@ void PlayerSystem::initPlayer() {
     player->addComponent<PlayerComponent>()->weapon = PlayerComponent::Weapon::PISTOL;
     player->addComponent<InputComponent>();
     player->addComponent<TimerComponent>();
+    player->addComponent<AnimationComponent>();
     player->addComponent<TextureComponent>(g_assets.weapons.texture);
     player->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WEAPONS, 25);
     player->addComponent<VelocityComponent>(0.f, 0.f, 0.f);
@@ -276,7 +277,7 @@ void PlayerSystem::updateShooting() {
             }
             std::vector<int> shootAnimFrameIDs =
             { weaponID, weaponID + 1, weaponID + 2, weaponID + 3, weaponID + 4, weaponID };
-            playerEntity->addComponent<AnimationComponent>(shootAnimFrameIDs, animTicksTimer, false);
+            playerEntity->getComponent<AnimationComponent>()->addAnim(AnimCompData{shootAnimFrameIDs, animTicksTimer, false });
             gameScene->getAudio()->playSound("gunfire");
 
 
@@ -294,7 +295,7 @@ void PlayerSystem::updateShooting() {
                     auto shuffle = [](const std::vector<int>& vtr) {
                         std::vector<int> result = vtr;
 
-                        for (int i = result.size() - 1; i > 0; --i) {
+                        for (int i = (int)result.size() - 1; i > 0; --i) {
                             int j = getRandomRange(0, i);
                             std::swap(result[i], result[j]);
                         }
@@ -302,7 +303,8 @@ void PlayerSystem::updateShooting() {
                         return result;
                         
                     };
-                    bloodEntity->addComponent<AnimationComponent>(shuffle({0,1,2}), 8, false);
+                    bloodEntity->addComponent<AnimationComponent>();
+                    bloodEntity->getComponent<AnimationComponent>()->addAnim(AnimCompData{shuffle({0,1,2}), 8, false });
                     bloodEntity->addComponent<TextureComponent>(g_assets.bloodTMap.texture);
                     bloodEntity->addComponent<RayCastDotObjectComponent>(false);
                     bloodEntity->addComponent<DestroyDelayComponent>(24);

@@ -83,6 +83,14 @@ inline void println(const T& line, bool randomColor = false) {
     if constexpr (std::is_same_v<Type, Vector2f>) {
         strLine = std::to_string(line.x) + ", " + std::to_string(line.y);
     }
+    else if constexpr (std::is_same_v<Type, std::vector<int>>)
+    {
+        for (const auto& val : line)
+        {
+            strLine += std::to_string(val) + ", ";
+
+        }
+    }
     else {
         strLine = line;
     }

@@ -21,12 +21,12 @@ DOORS=\
 	(8, 14) (1, 0) 20;,\
 	(16, 14) (1, 0) 20;,
 
-# SECRET_WALLS=\
+SECRET_WALLS=\
 	(12, 10) (1, 0) 12;,\
 	
 	
 LOCK_GATES=\
-	(10, 10) 41 1;,\
+	(4, 10) 41 1;,\
 	
 	lamps, small trees, flags , dining tables
 

@@ -172,10 +172,12 @@ MenuScene::MenuScene(AppScreen* window, Input* input, SoundManager* audio):data(
     this->audio = audio;
 }
 bool MenuScene::initScene() {
-    this->finished = false;
+    this->finished = true;
+    this->newGame = true;
+
+
     this->deadPlayer = false;
     data.currentLvl = 1;
-    this->newGame = false;
     this->firstRun = false;
     data.highestScore = 0;
     //this->menuScene = std::make_unique<OpenScreen>(this->window, this->input, this->audio);

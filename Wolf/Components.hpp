@@ -292,32 +292,67 @@ struct RayCastDotObjectComponent : public Component {
 
 };
 //src rect
-struct AnimationComponent : public Component {
-    AnimationComponent(std::vector<int> frameIDS, int ticksPerFrame,
-        bool repeated = true) :
-        frameIDS(frameIDS),
-        frameCount((int)frameIDS.size()),
-        ticksPerFrame(ticksPerFrame),
-        repeated(repeated),
-        frameTimer(ticksPerFrame)
-    {}
-    AnimationComponent(const AnimationComponent& other) :
-        frameIDS(other.frameIDS),
-        ticksPerFrame(other.ticksPerFrame),
-        repeated(other.repeated),
-        frameCount((int)frameIDS.size()),
-        frameTimer(ticksPerFrame)
-    {   
-    }
-    std::vector<int> frameIDS;
-    int frameCount;
+struct AnimCompData
+{
+    std::vector<int> frameIDS; 
     int ticksPerFrame;
-    int frameTimer = 0;
-
-    int currentFrame = 0;
-
     bool repeated = true;
+    int frameCount;
+    int frameTimer;
+    int currentFrame;
 
+};
+struct AnimationComponent : public Component
+{
+    AnimationComponent()
+    {
+        anims.reserve(4);
+    }
+
+    void addAnim(AnimCompData animData)
+    {
+        println(animData.frameIDS, true);
+        popRepeated();
+        animData.currentFrame = 0;
+        animData.frameTimer = animData.ticksPerFrame;
+        animData.frameCount = static_cast<int>(animData.frameIDS.size());
+
+        anims.push_back(std::move(animData));
+    }
+
+    void clearQueue()
+    {
+        anims.clear();
+    }
+
+    AnimCompData* getAnim()
+    {
+        return anims.empty() ? nullptr : &anims.front();
+    }
+
+    void popAnim()
+    {
+        if (!anims.empty())
+            anims.erase(anims.begin());
+    }
+    void popRepeated()
+    {
+        for (auto it = anims.begin(); it != anims.end();)
+        {
+            if (it->repeated)
+                it = anims.erase(it);
+            else
+                ++it;
+        }
+    }
+
+    bool hasAnim() const
+    {
+        return !anims.empty();
+    }
+
+private:
+    std::vector<AnimCompData> anims;
 };
 
 
