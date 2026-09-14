@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Scene.hpp"
 #include "LevelData.hpp"
+#include "GFX.hpp"
 #include <memory>
 class World;
 class Camera;
@@ -24,7 +25,7 @@ public:
     void quitScene() override;
     bool isPlayerDead() { return playerDead;}
     void setPlayerDead(bool val) { playerDead = val;}
-
+    int wallMap[GFX::MAP_H][GFX::MAP_W];
 
 private:
     bool playerDead = false;

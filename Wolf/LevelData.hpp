@@ -55,22 +55,23 @@ struct Door
 {
     Vector2i position;
     Vector2i dirMove;
-    int tileID;
 
 };
+
 
 struct LevelData
 {
     Vector2f playerStart;
     Vector2f cameraStart;
 
+    Vector2i endGate;
     std::vector<Door> doors;
     std::vector<SecretWall> secretWalls;
     std::vector<LockGate> lockGates;
     std::vector<CollectibleData> collectibles;
     std::vector<KeyData> keys;
     std::vector<DecorationData> decorations;
-
+    std::vector<std::vector<int>> map;
     bool loadLevelProperties(const std::string& path);
 };
 

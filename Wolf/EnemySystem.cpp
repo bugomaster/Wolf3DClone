@@ -9,12 +9,12 @@
 //#define DISABLE_ENEMIES
 
 
-float heuristic(PathNode* a, PathNode* b)
+float EnemySystem::heuristic(PathNode* a, PathNode* b)
 {
     return (float)abs(a->x - b->x) +
         (float)abs(a->y - b->y);
 }
-std::vector<Vector2f> AStar(Vector2f start, Vector2f end)
+std::vector<Vector2f> EnemySystem::AStar(Vector2f start, Vector2f end)
 {
     println("Generating path...");
 
@@ -105,7 +105,7 @@ std::vector<Vector2f> AStar(Vector2f start, Vector2f end)
 
             if (nx < 0 || ny < 0 ||nx >= GFX::MAP_W ||ny >= GFX::MAP_H)
                 continue;
-            if (Map::wallMap[ny][nx] >= 1)
+            if (this->gameScene->wallMap[ny][nx] >= 1)
             {
                 continue;
             }
@@ -142,7 +142,7 @@ std::vector<Vector2f> AStar(Vector2f start, Vector2f end)
 bool EnemySystem::seePos(Entity* enemy, Vector2f pos)
 {
     static const float eye2eyeDis = 0.01f;
-    Entity* player = scene->playerEntity;
+    Entity* player = gameScene->playerEntity;
     if (!player) return false;
 
 
@@ -177,10 +177,10 @@ bool EnemySystem::seePos(Entity* enemy, Vector2f pos)
             if (x < 0 || y < 0 || x >= GFX::MAP_W || y >= GFX::MAP_H)
                 return false;
 
-            if (Map::wallMap[y][x] != 0)
+            if (this->gameScene->wallMap[y][x] != 0)
             {
                 // door -> maybe open
-                //if (Map::wallMap[y][x] == -1 || Map::wallMap[y][x] == -2)
+                //if (this->gameScene->wallMap[y][x] == -1 || this->gameScene->wallMap[y][x] == -2)
                 //{
                 //    if (MapSystem::gridObjectsMap[y][x] &&
                 //        MapSystem::gridObjectsMap[y][x]->hasComponent<DoorComponent>()&&
@@ -259,18 +259,26 @@ EnemyState* EnemySystem::buildEnemyStates()
     attack->prev = chase;
 
 
-    const int MAX_DIS_TO_PLAYER = 20;
+
+    //CONSTS
+
+    const int SIGHT_RANGE = 20;
+    const int  SHOOT_RANGE = 8;
+    const int  MAX_WALKING_TIME = 40;
+
     const int MAX_SHOTS = 3;
 
     patrol->onEnter = [](Entity* enemy)
     {
 
-        enemy->getComponent<SpritesheetComponent>()->frameID = getRandomRange(0, 7);
+        enemy->getComponent<SpritesheetComponent>()->frameID = getRandomRange(0, 7);//the spawn -> standing texture face
 
         auto* velEnemy = enemy->getComponent<VelocityComponent>();
         auto* enemyComp = enemy->getComponent<EnemyComponent>();
         velEnemy->dx = 0.f;
         velEnemy->dy = 0.f;
+
+        enemyComp->hearShot = false;
 
     };
     patrol->onUpdate = [=](Entity* enemy)
@@ -278,18 +286,17 @@ EnemyState* EnemySystem::buildEnemyStates()
         auto* enemyComp = enemy->getComponent<EnemyComponent>();
         auto* velEnemy = enemy->getComponent<VelocityComponent>();
         auto* ePos = enemy->getComponent<PositionComponent>();
-        auto* playerPos = scene->playerEntity->getComponent<PositionComponent>();
+        auto* playerPos = gameScene->playerEntity->getComponent<PositionComponent>();
         const float distToPlayer = std::hypot(
             playerPos->position.x - ePos->position.x,
             playerPos->position.y - ePos->position.y);
 
-        if (seePos(enemy, playerPos->position) && distToPlayer  < MAX_DIS_TO_PLAYER)
+        if (seePos(enemy, playerPos->position) && distToPlayer  < SIGHT_RANGE)
         {
             changeState(enemy, patrolAlert);
         }
         else if (enemyComp->hearShot)
         {
-            enemyComp->hearShot = false;
             changeState(enemy, chase);
         }
     };
@@ -299,7 +306,7 @@ EnemyState* EnemySystem::buildEnemyStates()
     };
     patrolAlert->onEnter = [=](Entity* enemy)
     {
-        scene->getAudio()->playSound("halt");
+        gameScene->getAudio()->playSound("halt");
 
         auto* enemyComp = enemy->getComponent<EnemyComponent>();
         enemyComp->seeTargetTimer = enemyComp->reactionTime;
@@ -307,7 +314,7 @@ EnemyState* EnemySystem::buildEnemyStates()
     };
     patrolAlert->onUpdate = [=](Entity* enemy)
     {        
-        const auto* playerPos = scene->playerEntity->getComponent<PositionComponent>();
+        const auto* playerPos = gameScene->playerEntity->getComponent<PositionComponent>();
         auto* enemyComp = enemy->getComponent<EnemyComponent>();
         auto* ePos = enemy->getComponent<PositionComponent>();
 
@@ -316,7 +323,7 @@ EnemyState* EnemySystem::buildEnemyStates()
             playerPos->position.y - ePos->position.y);
 
 
-        if (seePos(enemy, playerPos->position) && distToPlayer < MAX_DIS_TO_PLAYER)
+        if (seePos(enemy, playerPos->position) && distToPlayer < SIGHT_RANGE)
         {
             if (enemyComp->seeTargetTimer > 0)
                 enemyComp->seeTargetTimer--;
@@ -337,141 +344,157 @@ EnemyState* EnemySystem::buildEnemyStates()
     //
     
     chase->onEnter = [=](Entity* enemy) {
+        auto* playerPos = gameScene->playerEntity->getComponent<PositionComponent>();
+
+
+
+        auto* animComp = enemy->getComponent<AnimationComponent>();
         auto* ePos = enemy->getComponent<PositionComponent>();
-        auto* playerPos = scene->playerEntity->getComponent<PositionComponent>();
         auto* enemyComp = enemy->getComponent<EnemyComponent>();
+        animComp->addAnim(AnimCompData{ std::vector<int>{8, 16, 24, 32}, 8 });//walking anim
+
+
+
         enemyComp->walkingStraight = getRandomRange(0, 1) == 1;
-        enemy->getComponent<AnimationComponent>()->addAnim(AnimCompData{ std::vector<int>{8, 16, 24, 32}, 8 });
-        ePos->setAngle(0.f);
+        enemyComp->walkingTime = 0;
+        enemyComp->angleOffset = 0.0f;
 
 
 
-
-
-
+        // every chase uses a new path
         enemyComp->path = {};
         enemyComp->iPath = 0;
 
         if (!seePos(enemy, playerPos->position))
         {
             enemyComp->path = AStar(ePos->position, playerPos->position);
-
             println("1");
-            enemyComp->iPath = 0;
         }
-        
-        enemyComp->walkingTime = 0;
-        enemyComp->dirAngle *= -1.f;
     };
     chase->onUpdate = [=](Entity* enemy)
     {
-        const auto* playerPos = scene->playerEntity->getComponent<PositionComponent>();
+        const auto* playerPos = gameScene->playerEntity->getComponent<PositionComponent>();
+        const bool seePlayer = seePos(enemy, playerPos->position);
+
+
 
         auto* enemyComp = enemy->getComponent<EnemyComponent>();
         auto* ePos = enemy->getComponent<PositionComponent>();
         auto* eVel = enemy->getComponent<VelocityComponent>();
-        const bool seePlayer = seePos(enemy, playerPos->position);
+
+
         const float distToPlayer = std::hypot(
             playerPos->position.x - ePos->position.x,
             playerPos->position.y - ePos->position.y);
-
-        float dx = playerPos->position.x - ePos->position.x;
-        float dy = playerPos->position.y - ePos->position.y;
-
-        int sizePath = (int)enemyComp->path.size();
-        if (sizePath != 0 && !seePlayer) // there is a path
-        {
-            Vector2f target =
-            { enemyComp->path[enemyComp->iPath].x,
-              enemyComp->path[enemyComp->iPath].y };
-
-
-            dx = target.x - ePos->position.x;
-            dy = target.y - ePos->position.y;
-
-            if (std::hypot(dx, dy) < 0.1f)
-            {
-                enemyComp->iPath++;//reached the next node of the path
-            }
-
-            if (enemyComp->iPath >= sizePath)//finished the path
-            {
-                //reset . recalculate path
-                enemyComp->path = {};
-                enemyComp->iPath = 0;
-                if (!seePlayer)
-                {
-                    enemyComp->path = AStar(ePos->position, playerPos->position);
-                    sizePath = (int)enemyComp->path.size();
-
-                    println("2");
-                    enemyComp->iPath = 0;
-
-                }
-
-            }
-
-
-        }
-
-
-        float angle = std::atan2(dy, dx);
-
-
-        
-        if (distToPlayer > MAX_DIS_TO_PLAYER)
+        if (distToPlayer > SIGHT_RANGE)
         {
             changeState(enemy, patrol);
             return;
-
-        }
-        else if (seePlayer && distToPlayer < 2)
-        {
-            changeState(enemy, attack);
-            return;
-        }        
-        else if(!seePlayer && enemyComp->path.size() == 0)// no path and dont see player
-        {
-            enemyComp->path = AStar(ePos->position, playerPos->position);
-            sizePath = (int)enemyComp->path.size();
-
-            println("3");
-            enemyComp->iPath = 0;
         }
 
-        if (sizePath == 0 && !enemyComp->walkingStraight)
-        {//walks diagonaly
-            if (enemyComp->angleOffset != 0.f)
+
+
+        float dx = playerPos->position.x - ePos->position.x;
+        float dy = playerPos->position.y - ePos->position.y;
+        // straight to player
+        if (seePlayer)
+        {
+
+            if (enemyComp->walkingStraight)
             {
-                auto* animComp = enemy->getComponent<AnimationComponent>()->getAnim();
+                //walks diagonaly
+                auto* animComp = enemy->getComponent<AnimationComponent>();
+                auto* currentAnim = animComp->getAnim();
                 if (((int)((dx + dy) / 1.4f)) % 2 == 0)
                 {
-                    angle -= enemyComp->angleOffset;
-                    if (animComp->frameIDS[0] != 15)
+                    enemyComp->angleOffset = -0.2f;
+                    if (currentAnim->frameIDS[0] != 15)
                         enemy->getComponent<AnimationComponent>()->addAnim({ std::vector<int>{ 15, 23, 31, 39 }, 8, true });
                 }
                 else
                 {
-                    angle += enemyComp->angleOffset;
-                    if (animComp->frameIDS[0] != 9)
+                    enemyComp->angleOffset = 0.2f;
+                    if (currentAnim->frameIDS[0] != 9)
                         enemy->getComponent<AnimationComponent>()->addAnim({ std::vector<int>{ 9, 17, 25, 33 }, 8, true });
                 }
+
+            }
+            if (distToPlayer < SHOOT_RANGE)
+            {
+                if (distToPlayer < 2)//too close
+                {
+                    changeState(enemy, attack);
+                    return;
+                }
+                else if (!enemyComp->walkingStraight && enemyComp->walkingTime > MAX_WALKING_TIME * 4)
+                {
+                    changeState(enemy, attack);
+                    return;
+                }
+                else if (enemyComp->walkingTime > MAX_WALKING_TIME * 2)
+                {
+                    changeState(enemy, attack);
+                    return;
+                }
+
             }
         }
+
+
+        // path follow
+        else 
+        {
+            int sizePath = (int)enemyComp->path.size();
+            if (sizePath != 0)
+            {
+                Vector2f target =
+                { enemyComp->path[enemyComp->iPath].x,
+                  enemyComp->path[enemyComp->iPath].y };
+
+
+                dx = target.x - ePos->position.x;
+                dy = target.y - ePos->position.y;
+
+                if (std::hypot(dx, dy) < 0.1f)
+                {
+                    enemyComp->iPath++;//reached the next node of the path
+                }
+
+                if (enemyComp->iPath >= sizePath)//finished the path
+                {
+                    //reset . recalculate path
+                    enemyComp->path = {};
+                    enemyComp->iPath = 0;
+                    if (!seePlayer)
+                    {
+                        enemyComp->path = AStar(ePos->position, playerPos->position);
+                        println("2");
+                        enemyComp->iPath = 0;
+
+                    }
+
+                }
+
+            }
+            else
+            {
+                enemyComp->path = AStar(ePos->position, playerPos->position);
+
+                println("3");
+                enemyComp->iPath = 0;
+
+            }
+        }
+
+
+
+
+        float angle = std::atan2(dy, dx);
+        angle += enemyComp->angleOffset;
         eVel->dx = std::cos(angle) * MovementConstants::ENEMY_SPEED;
         eVel->dy = std::sin(angle) * MovementConstants::ENEMY_SPEED;
-
-
-
         enemyComp->walkingTime++;
 
-
-        if (seePlayer && enemyComp->walkingTime > enemyComp->maxWalkingTime && distToPlayer < 8)
-        {
-            changeState(enemy, attack);
-            return;
-        }
-        
     };
     chase->onExit = [=](Entity* enemy) {
     };
@@ -517,7 +540,7 @@ EnemyState* EnemySystem::buildEnemyStates()
 
 
         
-        const auto* playerPos = scene->playerEntity->getComponent<PositionComponent>();
+        const auto* playerPos = gameScene->playerEntity->getComponent<PositionComponent>();
         auto* ePos = enemy->getComponent<PositionComponent>();
         auto* eVel = enemy->getComponent<VelocityComponent>();
 
@@ -526,7 +549,7 @@ EnemyState* EnemySystem::buildEnemyStates()
                 playerPos->position.y - ePos->position.y);
 
 
-        if (distToPlayer > MAX_DIS_TO_PLAYER)
+        if (distToPlayer > SIGHT_RANGE)
         {
             changeState(enemy, patrol);
             return;
@@ -541,7 +564,7 @@ EnemyState* EnemySystem::buildEnemyStates()
         if (attack->dealDamage && getRandomRange(0,10) > 5)
         {
             attack->dealDamage = false;
-            scene->playerEntity->getComponent<PlayerComponent>()->health -= 10;
+            gameScene->playerEntity->getComponent<PlayerComponent>()->health -= 10;
         }
 
         if (enemyComp->counterShots > MAX_SHOTS)
@@ -576,7 +599,11 @@ void EnemySystem::freeEnemyStates(EnemyState* first)
     }
 }
 
-void EnemySystem::onAddedToWorld(World* world) 
+EnemySystem::EnemySystem(GameScene* gameScene) :
+gameScene(gameScene)
+{
+}
+void EnemySystem::onAddedToWorld(World* world)
 {
 
 
@@ -585,25 +612,26 @@ void EnemySystem::onAddedToWorld(World* world)
     this->states = states;
 
 
-    auto startPos = Vector2f{ 8.5f,16.5f };
+    auto startPos = Vector2f{};
     static const unsigned long enemiesCount = 1;
     bool inWall = false;
     for (size_t i = 0; i < enemiesCount; i++)
     {
         startPos.x = getRandomRange(2.f, 18.f);
         startPos.y = getRandomRange(2.f, 18.f);
-        inWall = Map::wallMap[(int)(startPos.y)][(int)(startPos.x)] != 0;
-        inWall |= Map::wallMap[(int)(startPos.y - GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
-        inWall |= Map::wallMap[(int)(startPos.y + GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
-        inWall |= Map::wallMap[(int)(startPos.y)][(int)(startPos.x + GFX::ENEMY_RADIUS)] != 0;
-        inWall |= Map::wallMap[(int)(startPos.y)][(int)(startPos.x - GFX::ENEMY_RADIUS)] != 0;
+        startPos = Vector2f{ 18.5f,8.5f };
+        inWall = this->gameScene->wallMap[(int)(startPos.y)][(int)(startPos.x)] != 0;
+        inWall |= this->gameScene->wallMap[(int)(startPos.y - GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
+        inWall |= this->gameScene->wallMap[(int)(startPos.y + GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
+        inWall |= this->gameScene->wallMap[(int)(startPos.y)][(int)(startPos.x + GFX::ENEMY_RADIUS)] != 0;
+        inWall |= this->gameScene->wallMap[(int)(startPos.y)][(int)(startPos.x - GFX::ENEMY_RADIUS)] != 0;
         while (inWall)
         {
-            inWall = Map::wallMap[(int)(startPos.y)][(int)(startPos.x)] != 0;
-            inWall &= Map::wallMap[(int)(startPos.y - GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
-            inWall &= Map::wallMap[(int)(startPos.y + GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
-            inWall &= Map::wallMap[(int)(startPos.y)][(int)(startPos.x + GFX::ENEMY_RADIUS)] != 0;
-            inWall &= Map::wallMap[(int)(startPos.y)][(int)(startPos.x - GFX::ENEMY_RADIUS)] != 0;
+            inWall = this->gameScene->wallMap[(int)(startPos.y)][(int)(startPos.x)] != 0;
+            inWall &= this->gameScene->wallMap[(int)(startPos.y - GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
+            inWall &= this->gameScene->wallMap[(int)(startPos.y + GFX::ENEMY_RADIUS)][(int)(startPos.x)] != 0;
+            inWall &= this->gameScene->wallMap[(int)(startPos.y)][(int)(startPos.x + GFX::ENEMY_RADIUS)] != 0;
+            inWall &= this->gameScene->wallMap[(int)(startPos.y)][(int)(startPos.x - GFX::ENEMY_RADIUS)] != 0;
 
             startPos.x = getRandomRange(2.f, 18.f);
             startPos.y = getRandomRange(2.f, 18.f);
@@ -620,7 +648,7 @@ void EnemySystem::onAddedToWorld(World* world)
 
 
 
-            guard->addComponent<EnemyComponent>(EnemyType::GUARD, 20, 80, states);
+            guard->addComponent<EnemyComponent>(EnemyType::GUARD, 20, states);
 
             guard->addComponent<TimerComponent>();
 
@@ -680,10 +708,10 @@ void EnemySystem::update(World* world)
             switch (sound)
             {
             case 1: {
-                scene->getAudio()->playSound("ahh");
+                gameScene->getAudio()->playSound("ahh");
             }break;
             case 2: {
-                scene->getAudio()->playSound("mynaven");
+                gameScene->getAudio()->playSound("mynaven");
             }break;
             default:
                 break;

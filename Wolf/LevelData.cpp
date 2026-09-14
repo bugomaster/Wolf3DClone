@@ -60,9 +60,44 @@ Vector2f parseVector2(const std::string& str)
     return result;
 }
 
-bool LevelData::loadLevelProperties(const std::string& path) {
-    std::ifstream file(path);
+std::vector<std::vector<int>> loadMap(const std::string& filename)
+{
+    std::vector<std::vector<int>> map;
 
+    std::ifstream file(filename);
+    if (!file) {
+        std::cerr << "Failed to open " << filename << '\n';
+        return map;
+    }
+
+    std::string line;
+
+    while (std::getline(file, line)) {
+        if (line.empty())
+            continue;
+
+        std::vector<int> row;
+        row.reserve(line.size());
+
+        for (char c : line) {
+            if (c == '0' || c == '1') {
+                row.push_back(c - '0');
+            }
+        }
+
+        if (!row.empty())
+            map.push_back(std::move(row));
+    }
+
+    return map;
+}
+
+
+
+bool LevelData::loadLevelProperties(const std::string& path) {
+    this->map = loadMap(path + "map.txt");
+
+    std::ifstream file(path + "level.levelproperties");
     if (!file.is_open())
     {
         std::cerr << "Failed to open level file\n";
@@ -177,14 +212,38 @@ bool LevelData::loadLevelProperties(const std::string& path) {
 
                 sscanf_s(
                     entry.c_str(),
-                    "(%d,%d) (%d,%d) %d",
+                    "(%d,%d) (%d,%d)",
                     &door.position.x,
                     &door.position.y,
                     &door.dirMove.x,
-                    &door.dirMove.y,
-                    &door.tileID
+                    &door.dirMove.y
                 );
                 this->doors.push_back(door);
+            }
+        }
+        else if (key == "END_GATE")
+        {
+
+            std::string entry;
+            auto parts = splitByString(value, ";,", 0);
+
+            for (auto part : parts)
+            {
+                entry = part;
+                entry = trim(entry);
+
+                if (entry.empty())
+                    continue;
+
+                Vector2i endGate{};
+
+                sscanf_s(
+                    entry.c_str(),
+                    "(%d,%d)",
+                    &endGate.x,
+                    &endGate.y
+                );
+                this->endGate = endGate;
             }
         }
         else if (key == "COLLECTBLES")

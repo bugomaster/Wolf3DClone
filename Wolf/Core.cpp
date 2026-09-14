@@ -7,8 +7,6 @@
 #include "Map.hpp"
 #include "GFX.hpp"
 
-
-
 bool Core::init() {
     bool success = true;
 
@@ -20,14 +18,20 @@ bool Core::init() {
     audio.init();
 
     //
+
     menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio);
     menuScene.get()->initScene();
+    menuScene.get()->firstRun = true;
+
     gameScene = std::make_unique<GameScene>(&gameScreen, &gameInput, &audio);
     gameScene.get()->initScene();
-    //menuScene.get()->firstRun = true;
-    
+#ifdef NO_MENU
+        this->scene = gameScene.get();
+#else
+    this->scene = menuScene.get();
+#endif // NO_MENU
 
-    this->scene = gameScene.get();
+
 
     return success;
 }

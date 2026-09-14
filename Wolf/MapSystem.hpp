@@ -17,7 +17,7 @@ public:
     void createDoorVer(World* world, const Door& door);
     void createSecretMoveableWall(World* world, const SecretWall& wall);
     void createLockGate(World* world, const LockGate& lockGate);
-    static Entity* gridObjectsMap[GFX::MAP_H][GFX::MAP_W];
+    static EntityID gridObjectsMap[GFX::MAP_H][GFX::MAP_W];
 private:
     GameScene* gameScene;
 

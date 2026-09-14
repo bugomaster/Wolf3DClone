@@ -9,18 +9,23 @@ COLLECTBLES=\
 	(11.5, 3.5) MEAL;,\
 	(12.5, 3.5) MEAL;,\
 	(13.5, 3.5) MEAL;,\
-	(2.5, 4.5) AMMO;,
+	(2.5, 4.5) AMMO;,\
 
 KEYS=\
-	(8.5, 3.5) 1;,
+	(8.5, 3.5) 1;,\
 
 	
 	
 	
 DOORS=\
-	(8, 14) (1, 0) 20;,\
-	(16, 14) (1, 0) 20;,
-
+	(8, 14) (1, 0);,\
+	(16, 14) (1, 0);,\
+	
+	
+END_GATE=\
+	(4, 19);,\
+	
+	
 SECRET_WALLS=\
 	(12, 10) (1, 0) 12;,\
 	
@@ -28,7 +33,6 @@ SECRET_WALLS=\
 LOCK_GATES=\
 	(4, 10) 41 1;,\
 	
-	lamps, small trees, flags , dining tables
 
 DECORATIONS=\
 	(2, 13) LAMP;,\

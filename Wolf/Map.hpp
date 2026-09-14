@@ -8,7 +8,6 @@ private:
 
 
 public:
-    static int wallMap[GFX::MAP_H] [GFX::MAP_W];
 
 
 

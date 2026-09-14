@@ -28,8 +28,8 @@ void AnimationSystem::update(World* world) {
                         }
 
                     }
-                    spritesheet->frameID = currentAnim->frameIDS[currentAnim->currentFrame];
                 }
+                spritesheet->frameID = currentAnim->frameIDS[currentAnim->currentFrame];
             }
         });
 

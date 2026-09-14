@@ -75,6 +75,14 @@ const T& getRandomFromVector(const std::vector<T>& vec)
     std::uniform_int_distribution<std::size_t> dist(0, vec.size() - 1);
     return vec[dist(gen)];
 }
+inline std::vector<int> shuffleVtrInt(const std::vector<int>& vtr) {
+    std::vector<int> result = vtr;
+    for (int i = (int)result.size() - 1; i > 0; --i) {
+        int j = getRandomRange(0, i);
+        std::swap(result[i], result[j]);
+    }
+    return result;
+};
 
 template <typename T>
 inline void println(const T& line, bool randomColor = false) {
@@ -237,6 +245,11 @@ public:
     Entity* createEntity() {
         Entity* e = new Entity(nextEntityID++);
         pendingEntities.push_back(e);
+        return e;
+    }
+    Entity* createImmiditeEntity() {
+        Entity* e = new Entity(nextEntityID++);
+        entities.push_back(e);
         return e;
     }
 

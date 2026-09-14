@@ -20,7 +20,17 @@ GameScene::GameScene(AppScreen* window, Input* input,SoundManager* audio)
 bool GameScene::initScene() {
     this->finished = false;
     world = new World();
-    levelData.loadLevelProperties("Levels/Level_1/level_1.levelproperties");
+    levelData.loadLevelProperties("Levels/Level_1/");
+    Vector2i wh = Vector2i{ (int)levelData.map[0].size(),(int)levelData.map.size() };
+    for (int y = 0; y < wh.y; y++)
+    {
+        for (int x = 0; x < wh.x; x++)
+        {
+            this->wallMap[y][x] = levelData.map.at(y).at(x);
+
+        }
+
+    }
 
     world->registerSystem<MapSystem>(this);
     world->registerSystem<CallBackSystem>(this);
@@ -163,7 +173,7 @@ void OpenScreen::render()
 
 
 
-
+#define NO_CUT_SCENES
 MenuScene::MenuScene(AppScreen* window, Input* input, SoundManager* audio):data({})
 {
 
@@ -172,16 +182,29 @@ MenuScene::MenuScene(AppScreen* window, Input* input, SoundManager* audio):data(
     this->audio = audio;
 }
 bool MenuScene::initScene() {
+    this->firstRun = false;
+
+
+
+#ifdef NOMENU
     this->finished = true;
     this->newGame = true;
+#else
+#ifdef NO_CUT_SCENES
+    this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio);
+#else
+    this->menuScene = std::make_unique<OpenScreen>(this->window, this->input, this->audio);
 
+#endif 
+    this->finished = false;
+    this->newGame = false;
 
+#endif // NOMENU
+    this->newGame = false;
     this->deadPlayer = false;
     data.currentLvl = 1;
-    this->firstRun = false;
     data.highestScore = 0;
-    //this->menuScene = std::make_unique<OpenScreen>(this->window, this->input, this->audio);
-    this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio);
+
     return true;
 }
 void MenuScene::handleInput()

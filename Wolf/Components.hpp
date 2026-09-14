@@ -75,6 +75,8 @@ struct PlayerComponent : public Component {
 };
 
 
+struct EndGateComponent : Component {
+};
 struct LockGateComponent : Component {
 
     LockGateComponent(Vector2i position, int face, int keyID):
@@ -319,7 +321,14 @@ struct AnimationComponent : public Component
 
         anims.push_back(std::move(animData));
     }
+    void addFirst(AnimCompData animData) {
+        animData.currentFrame = 0;
+        animData.frameTimer = animData.ticksPerFrame;
+        animData.frameCount = static_cast<int>(animData.frameIDS.size());
 
+        anims.insert(anims.begin(), animData);
+
+    }
     void clearQueue()
     {
         anims.clear();
@@ -366,30 +375,13 @@ struct Target {
     float angle;
 };
 struct EnemyState;
-struct PathNode
-{
-    int x;
-    int y;
-
-    float g; // distance from start
-    float h; // distance to goal
-    float f; // g + h
-
-    PathNode* parent;
-
-    PathNode(int x, int y)
-        : x(x), y(y), g(0), h(0), f(0), parent(nullptr)
-    {
-    }
-};
 struct EnemyComponent : public Component
 {
-    EnemyComponent(EnemyType type, int reactionTime,int maxWalkingTime,
+    EnemyComponent(EnemyType type, int reactionTime,
         EnemyState* currentState , Collectible drop = Collectible::AMMO)
         :
         type(type),
         reactionTime(reactionTime),
-        maxWalkingTime(maxWalkingTime),
         seeTargetTimer(reactionTime), currentState(currentState),
         drop(drop)
     {
@@ -405,7 +397,6 @@ struct EnemyComponent : public Component
     EnemyState* currentState = nullptr;
     EnemyState* prevState = nullptr;
 
-    bool hearShot = false;
 
 
     EnemyType type;
@@ -417,6 +408,9 @@ struct EnemyComponent : public Component
     std::vector<Vector2f> path;
     int iPath = 0;
 
+    //patrol 
+    bool hearShot = false;
+
 
     //patrolAlert
     int seeTargetTimer = 0;
@@ -425,11 +419,7 @@ struct EnemyComponent : public Component
 
     //chase
     int walkingTime = 0;
-    int maxWalkingTime = 0;
-    float dirAngle = -1.f;
-
-    
-    float angleOffset = 0.1f;
+    float angleOffset = 0.0f;
     bool walkingStraight = true;
 
 
@@ -471,19 +461,6 @@ struct SpritesheetComponent : public Component
     {
     }
 
-    void setSpriteSheetWithAngle(bool val) {
-        if (val)
-        {
-            useAngle = true;
-            this->deltaAngle = (2.0f * GFX::PI) / (float)sprSheetData.cols;
-        }
-        else
-        {
-            useAngle = false;
-            this->deltaAngle = 1.f;
-        }
-        
-    }
 
     Vector2i getCoords(float angle = -1.f) const {
         int fid = frameID;

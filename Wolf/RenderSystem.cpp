@@ -11,8 +11,12 @@
 //GUI
 void RenderSystem::renderPlayerStats() 
 {
+    const auto* playerComp = gameScene->playerEntity->getComponent<PlayerComponent>();
+    const auto* playerPos = gameScene->playerEntity->getComponent<PositionComponent>();
 
-    auto* playerComp = gameScene->playerEntity->getComponent<PlayerComponent>();
+    gameScene->getScreen()->renderText(100, 40, 70, " X:" +
+        std::to_string((int)playerPos->position.x) + "    Y:" + std::to_string((int)playerPos->position.y), COLORS::BLUE);
+
     SDL_Rect dstRect = {0, GFX::SCREEN_HEIGHT - 100, GFX::SCREEN_WIDTH, 100};
     gameScene->getScreen()->blitTextureScale(g_assets.statsBar.texture, dstRect);
 
@@ -165,7 +169,7 @@ void RenderSystem::renderDotEntity(Entity* entity) {
 
         int y = (int)(GFX::SCREEN_HEIGHT * 0.5f - projHeight * 0.5f + cameraYScreen + pos->yScreenOffset);
 
-        Vector2i sprSheetCoords = sprSheet->getCoords(pos->getAngle());
+        Vector2i sprSheetCoords = sprSheet->getCoords();
 
         // BLACK BORDER
         Entity* midEntity = this->gameScene->world->getEntity(RayCastingSystem::middleRay.entityID);

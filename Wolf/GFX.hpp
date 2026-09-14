@@ -42,8 +42,8 @@ namespace GFX
 
 
 	constexpr int NUM_RAYS = 400;
-	constexpr int MAP_W = 20;
-	constexpr int MAP_H = 20;
+	constexpr int MAP_W = 40;
+	constexpr int MAP_H = 40;
 	constexpr int GRID_TILE_SIZE = 64;
 	constexpr int SCALE = SCREEN_WIDTH / NUM_RAYS;
 

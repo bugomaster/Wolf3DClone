@@ -158,11 +158,11 @@ void PlayerSystem::updateInput() {
         inputComp->space = true;
 
     {
-        if (gameScene->getInput()->pressed(SDL_SCANCODE_P))
-        {
-            auto* posComp = playerEntity->getComponent<PositionComponent>();
-            println(posComp->position, true);
-        }
+        //if (gameScene->getInput()->pressed(SDL_SCANCODE_P))
+        //{
+        //    auto* posComp = playerEntity->getComponent<PositionComponent>();
+        //    println(posComp->position, true);
+        //}
     }
 
 }
@@ -175,7 +175,7 @@ void PlayerSystem::updateDoorOpen() {
     Entity* midEntity = this->gameScene->world->getEntity(mid.entityID);
     if (midEntity && mid.rayHit.dist < 3.f)// middle ray -> points to object 
     {
-        Entity* wall = MapSystem::gridObjectsMap[mid.rayHit.mapCoords.y][mid.rayHit.mapCoords.x];
+        Entity* wall = gameScene->world->getEntity(MapSystem::gridObjectsMap[mid.rayHit.mapCoords.y][mid.rayHit.mapCoords.x]);
         if (!wall)
             return;
         if (wall->hasComponent<SecretWallComponent>())
@@ -225,7 +225,16 @@ void PlayerSystem::updateDoorOpen() {
             {
                 lockComp->on = true;
                 wall->getComponent<RectFacesComponent>()->faceIDs.at(0) = 43;// open texture
+                
             }
+        }
+        else if (inputComp->e && wall->hasComponent<EndGateComponent>() && mid.rayHit.dist < 1.5f)
+        {
+            wall->getComponent<SpritesheetComponent>()->frameID = 61;
+            wall->addComponent<VelocityComponent>(-0.01f, 0.f);
+            playerEntity->getComponent<TimerComponent>()->addTimer(100, [this](Entity* player) {
+                this->gameScene->setFinished(true);
+            });
         }
     }
 
@@ -248,7 +257,7 @@ void PlayerSystem::updateShooting() {
                 float dis = std::hypot(dx, dy);
                 if (dis < 5)
                 {
-                    enemy->getComponent<EnemyComponent>()->hearShot = true;
+                    enemy->getComponent<EnemyComponent>()->hearShot = true;// i shot . u guys should hear it
                 }
                 
                 
@@ -289,25 +298,22 @@ void PlayerSystem::updateShooting() {
                 if (enemyComp && RayCastingSystem::middleRay.rayHit.dist < GFX::MAX_SHOOT_RANGE)
                 {
                     enemyComp->lives--;
-                    Entity* bloodEntity = this->gameScene->world->createEntity();
-                    bloodEntity->addComponent<PositionComponent>(midEntity->getComponent<PositionComponent>()->position);
-                    bloodEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::BLOOD, 0);
-                    auto shuffle = [](const std::vector<int>& vtr) {
-                        std::vector<int> result = vtr;
+                    if (enemyComp->lives > 0)
+                    {
+                        Entity* bloodEntity = this->gameScene->world->createEntity();
+                        bloodEntity->addComponent<PositionComponent>(midEntity->getComponent<PositionComponent>()->position);
+                        bloodEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::BLOOD, 0);
+                        bloodEntity->addComponent<AnimationComponent>();
+                        bloodEntity->getComponent<AnimationComponent>()->addAnim(AnimCompData{ shuffleVtrInt({0,1,2}), 8, false });
+                        bloodEntity->addComponent<TextureComponent>(g_assets.bloodTMap.texture);
+                        bloodEntity->addComponent<RayCastDotObjectComponent>(false);
+                        bloodEntity->addComponent<DestroyDelayComponent>(24);
 
-                        for (int i = (int)result.size() - 1; i > 0; --i) {
-                            int j = getRandomRange(0, i);
-                            std::swap(result[i], result[j]);
-                        }
 
-                        return result;
-                        
-                    };
-                    bloodEntity->addComponent<AnimationComponent>();
-                    bloodEntity->getComponent<AnimationComponent>()->addAnim(AnimCompData{shuffle({0,1,2}), 8, false });
-                    bloodEntity->addComponent<TextureComponent>(g_assets.bloodTMap.texture);
-                    bloodEntity->addComponent<RayCastDotObjectComponent>(false);
-                    bloodEntity->addComponent<DestroyDelayComponent>(24);
+
+                        midEntity->getComponent<AnimationComponent>()->addFirst(AnimCompData{ std::vector<int>{47}, 10, false });
+
+                    }
                 }
             }
 
