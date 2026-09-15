@@ -99,6 +99,10 @@ inline void println(const T& line, bool randomColor = false) {
 
         }
     }
+    else if constexpr (std::is_same_v<Type, float>)
+    {
+        strLine = std::to_string(line);
+    }
     else {
         strLine = line;
     }

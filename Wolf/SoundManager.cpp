@@ -1,6 +1,7 @@
 #include "SoundManager.hpp"
 #include "pch.hpp"
-#define MUTE
+#include "gfx.hpp"
+//#define MUTE
 bool SoundManager::init()
 {
 #ifdef MUTE
@@ -19,6 +20,9 @@ bool SoundManager::init()
     loads &= this->loadSound("mynaven", "Assets/Sounds/enemies/LEBENSND.wav");
     loads &= this->loadSound("ammo", "Assets/Sounds/general/AMMOPICK.wav");
     loads &= this->loadSound("gunfire", "Assets/Sounds/weapons/ATKPISTOLSND.wav");
+    loads &= this->loadSound("doorOpen", "Assets/Sounds/general/OPENDOORSND.wav");
+    loads &= this->loadSound("wallPush", "Assets/Sounds/general/PUSHWALLSND.wav");
+    loads &= this->loadSound("wallPushEnd", "Assets/Sounds/general/ENDPUSHWALLSND.wav");
     return loads;
 }
 
@@ -88,6 +92,10 @@ void SoundManager::stopMusic()
 {
     Mix_HaltMusic();
 }
+void SoundManager::stopSound(int channel = -1)
+{
+    Mix_HaltChannel(channel);
+}
 
 void SoundManager::setSoundVolume(int volume)
 {
@@ -97,4 +105,21 @@ void SoundManager::setSoundVolume(int volume)
 void SoundManager::setMusicVolume(int volume)
 {
     Mix_VolumeMusic(volume);
+}
+
+void SoundManager::playSoundPositioned(const std::string& name, float angle,int distance, int loops,int channel)
+{
+    auto it = mSounds.find(name);
+
+    if (it == mSounds.end())
+        return;
+
+    Mix_PlayChannel(channel, it->second, loops);
+    float degrees = angle * (180.0f / GFX::PI);
+    degrees = std::fmod(degrees, 360.0f);
+    if (degrees < 0.0f) {
+        degrees += 360.0f; // Handles negative angles correctly
+    }
+    println(degrees);
+    Mix_SetPosition(channel, (Sint16)degrees, (Sint8)distance);
 }

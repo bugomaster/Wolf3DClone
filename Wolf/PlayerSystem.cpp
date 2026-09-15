@@ -28,7 +28,16 @@ officer
 first bos
 
 */
+/*
+SOUND CHANNELS:
+0 - 7
+2 doors
+3 moving walls
 
+
+
+
+*/
 
 
 
@@ -185,36 +194,50 @@ void PlayerSystem::updateDoorOpen() {
             {
                 wallComp->moving = true;
                 auto* wallComp = wall->getComponent<SecretWallComponent>();
-                wall->getComponent<VelocityComponent>()->dx = 0.01f;
-                wall->getComponent<TimerComponent>()->addTimer(1, [wallComp](Entity* wall)
-                    {
-                        wall->getComponent<VelocityComponent>()->dx = 0.f;
-                        wallComp->moving = false;
+                auto* velDoor = wall->getComponent<VelocityComponent>();
 
+                velDoor->dx = wallComp->moveDir.x * 0.01f;
+                velDoor->dy = wallComp->moveDir.y * 0.01f;
 
-                        auto* posWall = wall->getComponent<PositionComponent>();
-                        Vector2i currentPosI = { (int)posWall->position.x , (int)posWall->position.y };
-                        Vector2i prevPosI = wallComp->prevMapCoord;
+                this->gameScene->getAudio()->playSound("wallPush", 100, 3);
 
-                        if (prevPosI != currentPosI) {
-                            //gridObjectsMap switch
-                            {
-                                const auto valSwitch = MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x];
-                                MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x] =
-                                    MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x];
-                                MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x] = valSwitch;
-                            }
-                            wallComp->prevMapCoord = currentPosI;
+                wall->addComponent<WaitUntilComponent>([](Entity* wall)
+                {
+                    auto* velDoor = wall->getComponent<VelocityComponent>();
+                    return (velDoor->dx == 0.f && velDoor->dy == 0.f);
+                },
+                [this, wallComp](Entity* wall)
+                {
+                    this->gameScene->getAudio()->stopSound(3);
+                    this->gameScene->getAudio()->playSound("wallPushEnd", 1, 3);
+                    wallComp->moving = false;
+                    auto* posWall = wall->getComponent<PositionComponent>();
+                    Vector2i currentPosI = { (int)posWall->position.x , (int)posWall->position.y };
+                    Vector2i prevPosI = wallComp->prevMapCoord;
+
+                    if (prevPosI != currentPosI) {
+                        //gridObjectsMap switch
+                        {
+                            const auto valSwitch = MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x];
+                            MapSystem::gridObjectsMap[prevPosI.y][prevPosI.x] =
+                                MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x];
+                            MapSystem::gridObjectsMap[currentPosI.y][currentPosI.x] = valSwitch;
                         }
-                    });
+                        wallComp->prevMapCoord = currentPosI;
+                    }
+                }
+                );
+
             }
 
         }
         else if (inputComp->e && wall->hasComponent<DoorComponent>())//open door
         {
             auto* doorComp = wall->getComponent<DoorComponent>();
-            if (!doorComp->open)
+            if (!doorComp->open) {
                 doorComp->opening = true;
+                this->gameScene->getAudio()->playSound("doorOpen", 0, 7);
+            }
         }
         else if (inputComp->e && wall->hasComponent<LockGateComponent>() && mid.rayHit.dist < 1.5f)
         {

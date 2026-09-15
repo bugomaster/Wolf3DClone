@@ -4,6 +4,7 @@
 
 #include "GameScene.hpp"
 #include "AssetsLoads.hpp"
+#include "SoundManager.hpp"
 #include "GFX.hpp"
 #include "Map.hpp"
 EntityID MapSystem::gridObjectsMap[GFX::MAP_H][GFX::MAP_W];
@@ -33,8 +34,25 @@ void MapSystem::update(World* world) {
 				if (wentPast(doorComp->velDoor, doorPos->position, doorComp->openPos))
 				{
 					doorComp->opening = false;
-					door->getComponent<TimerComponent>()->addTimer(1000, [](Entity* entity) {
-						entity->getComponent<DoorComponent>()->closing = true;
+					door->getComponent<TimerComponent>()->addTimer(20, [this](Entity* entity) {
+						auto* doorComp = entity->getComponent<DoorComponent>();
+						doorComp->closing = true;
+						Vector2f posPlayer = this->gameScene->playerEntity->getComponent<PositionComponent>()->position;
+						Vector2f posDoor = entity->getComponent<PositionComponent>()->position;
+						float angle = this->gameScene->playerEntity->getComponent<PositionComponent>()->getAngle();
+						float dx = posPlayer.x - posDoor.x;
+						float dy = posPlayer.y - posDoor.y;
+
+						angle = std::atan2(dx, dy) - angle;
+
+						angle -= GFX::PI / 2.f;
+
+						println(angle);
+						int doorDist = (int)std::hypot((dx),(dy));
+						doorDist -= 2;
+						doorDist  = std::clamp(doorDist, 0, 255);
+
+						this->gameScene->getAudio()->playSoundPositioned("doorOpen", angle, doorDist, 0, 2);
 					});
 				}
 			}

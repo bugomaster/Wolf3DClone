@@ -179,16 +179,6 @@ bool EnemySystem::seePos(Entity* enemy, Vector2f pos)
 
             if (this->gameScene->wallMap[y][x] != 0)
             {
-                // door -> maybe open
-                //if (this->gameScene->wallMap[y][x] == -1 || this->gameScene->wallMap[y][x] == -2)
-                //{
-                //    if (MapSystem::gridObjectsMap[y][x] &&
-                //        MapSystem::gridObjectsMap[y][x]->hasComponent<DoorComponent>()&&
-                //        MapSystem::gridObjectsMap[y][x]->getComponent<DoorComponent>()->open)
-                //    {
-                //        continue;// its okay its open door
-                //    }
-                //}
                 return false;// a wall
             }
         }
@@ -407,15 +397,17 @@ EnemyState* EnemySystem::buildEnemyStates()
                 auto* currentAnim = animComp->getAnim();
                 if (((int)((dx + dy) / 1.4f)) % 2 == 0)
                 {
-                    enemyComp->angleOffset = -0.2f;
-                    if (currentAnim->frameIDS[0] != 15)
+                    if (currentAnim->frameIDS[0] != 15) {
+                        enemyComp->angleOffset = -getRandomRange(0.f, 0.3f);
                         enemy->getComponent<AnimationComponent>()->addAnim({ std::vector<int>{ 15, 23, 31, 39 }, 8, true });
+                    }
                 }
                 else
                 {
-                    enemyComp->angleOffset = 0.2f;
-                    if (currentAnim->frameIDS[0] != 9)
-                        enemy->getComponent<AnimationComponent>()->addAnim({ std::vector<int>{ 9, 17, 25, 33 }, 8, true });
+                    if (currentAnim->frameIDS[0] != 9) {
+                        enemyComp->angleOffset = getRandomRange(0.f, 0.3f);
+                        enemy->getComponent<AnimationComponent>()->addAnim({ std::vector<int>{ 9, 17, 25, 33 }, 8, true }); 
+                    }
                 }
 
             }
@@ -489,10 +481,10 @@ EnemyState* EnemySystem::buildEnemyStates()
 
 
 
-        float angle = std::atan2(dy, dx);
+        float angle = std::atan2(dx, dy);
         angle += enemyComp->angleOffset;
-        eVel->dx = std::cos(angle) * MovementConstants::ENEMY_SPEED;
-        eVel->dy = std::sin(angle) * MovementConstants::ENEMY_SPEED;
+        eVel->dx = std::sin(angle) * MovementConstants::ENEMY_SPEED;
+        eVel->dy = std::cos(angle) * MovementConstants::ENEMY_SPEED;
         enemyComp->walkingTime++;
 
     };

@@ -13,10 +13,12 @@ public:
 
     bool loadSound(const std::string& name, const std::string& file);
     void playSound(const std::string& name, int loops = 0, int channel = -1);
+    void playSoundPositioned(const std::string& name,float angle,int distance, int loops, int channel);
 
     bool loadMusic(const std::string& name, const std::string& file);
     void playMusic(const std::string& name, int loops = -1);
     void stopMusic();
+    void stopSound(int channel);
 
     void setSoundVolume(int volume);
     void setMusicVolume(int volume);
