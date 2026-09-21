@@ -7,6 +7,14 @@
 #include "GameScene.hpp"
 #include "RayCastingSystem.hpp"
 #include "AssetsLoads.hpp"
+#include <sstream>
+
+std::string toString(float value)
+{
+    std::ostringstream oss;
+    oss << std::defaultfloat << value;
+    return oss.str();
+}
 
 //GUI
 void RenderSystem::renderPlayerStats() 
@@ -14,23 +22,34 @@ void RenderSystem::renderPlayerStats()
     const auto* playerComp = gameScene->playerEntity->getComponent<PlayerComponent>();
     const auto* playerPos = gameScene->playerEntity->getComponent<PositionComponent>();
 
-    gameScene->getScreen()->renderText(100, 40, 70, " X:" +
-        std::to_string((int)playerPos->position.x) + "    Y:" + std::to_string((int)playerPos->position.y), COLORS::BLUE);
+
+    float x = playerPos->position.x;
+    x = std::floor(x * 10.0f) / 10.0f;
+
+    float y = playerPos->position.y;
+    y = std::floor(y * 10.0f) / 10.0f;
+
+
+    gameScene->getScreen()->renderText(0, 0, 50, 
+    " X:" + toString(x) + "    Y:" + toString(y), COLORS::BLUE, false);
+
+    gameScene->getScreen()->renderText(400, 0, 50, 
+    "Level: "+ std::to_string(this->gameScene->getLevel()), COLORS::BLUE, false);
 
     SDL_Rect dstRect = {0, GFX::SCREEN_HEIGHT - 100, GFX::SCREEN_WIDTH, 100};
     gameScene->getScreen()->blitTextureScale(g_assets.statsBar.texture, dstRect);
 
-    std::string ammoText = std::to_string(playerComp->ammo);
-    if (playerComp->ammo > 99)
+    std::string ammoText = std::to_string(playerComp->data.ammo);
+    if (playerComp->data.ammo > 99)
         ammoText = "99";
     //ammo
     gameScene->getScreen()->renderText(560, 560, 70, ammoText, COLORS::FONT);
     //score
-    gameScene->getScreen()->renderText(160, 560, 70, std::to_string(playerComp->points) , COLORS::FONT);
+    gameScene->getScreen()->renderText(160, 560, 70, std::to_string(playerComp->data.points) , COLORS::FONT);
     //health
-    gameScene->getScreen()->renderText(460, 560, 70, std::to_string(playerComp->health), COLORS::FONT);
+    gameScene->getScreen()->renderText(460, 560, 70, std::to_string(playerComp->data.health), COLORS::FONT);
     //lives
-    gameScene->getScreen()->renderText(280, 560, 70, std::to_string(playerComp->lives), COLORS::FONT);
+    gameScene->getScreen()->renderText(280, 560, 70, std::to_string(playerComp->data.lives), COLORS::FONT);
 
     
     //
@@ -39,16 +58,16 @@ void RenderSystem::renderPlayerStats()
     SDL_Rect srcRect = { 0,0, 48, 22 };
     //weapon
     {
-        switch (playerComp->weapon)
+        switch (playerComp->data.weapon)
         {
-        case PlayerComponent::Weapon::KNIFE: {}break;
-        case PlayerComponent::Weapon::PISTOL: {
+        case PlayerData::Weapon::KNIFE: {}break;
+        case PlayerData::Weapon::PISTOL: {
             tMapPicPos = { 0, 23 };
         }break;
-        case PlayerComponent::Weapon::RIFLE: {
+        case PlayerData::Weapon::RIFLE: {
             tMapPicPos = { 49, 0 };
         }break;
-        case PlayerComponent::Weapon::MACHINE_GUN: {
+        case PlayerData::Weapon::MACHINE_GUN: {
             tMapPicPos = { 49, 23 };
         }break;
         default:
@@ -76,31 +95,31 @@ void RenderSystem::renderPlayerStats()
     // face
     {
         tMapPicPos = { 0, 0 };
-        if (playerComp->health < 10)
+        if (playerComp->data.health < 10)
         {
             tMapPicPos = { 6,1 };
         }
-        else if (playerComp->health < 25)
+        else if (playerComp->data.health < 25)
         {
             tMapPicPos = { 3,1 };
 
         }
-        else if (playerComp->health < 40)
+        else if (playerComp->data.health < 40)
         {
             tMapPicPos = { 0,1 };
 
         }
-        else if (playerComp->health < 55)
+        else if (playerComp->data.health < 55)
         {
             tMapPicPos = { 9,0 };
 
         }
-        else if (playerComp->health < 70)
+        else if (playerComp->data.health < 70)
         {
             tMapPicPos = { 6,0 };
 
         }
-        else if (playerComp->health < 85)
+        else if (playerComp->data.health < 85)
         {
             tMapPicPos = { 3,0 };
         }

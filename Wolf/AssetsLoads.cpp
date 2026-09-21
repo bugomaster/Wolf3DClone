@@ -23,6 +23,7 @@ void Textures::loadAll(SDL_Renderer* renderer) {
     bool success = true;
     success &= wallTMap.load(renderer, "Assets/wallTMap.png");
     success &= guard.load(renderer, "Assets/guard.png");
+    success &= hound.load(renderer, "Assets/hound.png");
     success &= weapons.load(renderer, "Assets/weapons.png");
     success &= decorationsTMap.load(renderer, "Assets/Objects.png");
     success &= decorations2TMap.load(renderer, "Assets/Decorations.png");
@@ -49,6 +50,7 @@ void Textures::loadAll(SDL_Renderer* renderer) {
 void Textures::destroyAll() {
     wallTMap.destroy();
     guard.destroy();
+    hound.destroy();
     weapons.destroy();
     decorationsTMap.destroy();
     decorations2TMap.destroy();

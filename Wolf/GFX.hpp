@@ -4,6 +4,7 @@
 namespace ANIMATIONS
 {
 	constexpr int GUARD_DIE[5] = { 40, 41, 42, 43, 44 };
+	constexpr int HOUND_DIE[4] = { 32, 33, 34, 35 };
 
 }
 
@@ -30,6 +31,8 @@ namespace COLORS {
 }
 namespace GFX
 {
+
+	constexpr int MAX_LEVEL = 2;
 	constexpr float MAX_SHOOT_RANGE = 20.f;
 	constexpr float PLAYER_RADIUS = 0.3f;
 	constexpr int MAX_DEPTH = 64;
@@ -56,5 +59,6 @@ namespace GFX
 
 namespace MovementConstants {
 	constexpr float ENEMY_SPEED = 0.027f;
+	constexpr float HOUND_SPEED = 0.037f;
 }
 #define SCREEN_DIST (float)(GFX::SCREEN_WIDTH / (2.0f * tanf(GFX::FOV / 2.0f)))

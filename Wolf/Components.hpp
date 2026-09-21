@@ -2,6 +2,7 @@
 #include "GFX.hpp"
 #include "SpriteSheet.hpp"
 #include "LevelData.hpp"
+#include "PlayerData.hpp"
 
 #include <functional>
 #include <vector>
@@ -18,7 +19,7 @@ struct InputComponent : public Component {
         down(false),
         w(false),
         s(false),
-        space(false),
+        leftButton(false),
         disabled(false){}
     void reset() 
     {
@@ -28,7 +29,7 @@ struct InputComponent : public Component {
         this->up = false;
         this->s = false;
         this->w = false;
-        this->space = false;
+        this->leftButton = false;
         this->disabled = false;
         this->e = false;
 
@@ -48,28 +49,21 @@ struct InputComponent : public Component {
     bool down;
     bool w;
     bool s;
-    bool space;
+    bool leftButton;
     bool e;
 
 private:
     bool disabled = false;
 };
-struct PlayerComponent : public Component {
-    bool shoot = false;
-    enum class Weapon : int
-    {
-        KNIFE,
-        PISTOL,
-        RIFLE,
-        MACHINE_GUN,
-    };
 
-    Weapon weapon;
+struct PlayerComponent : public Component {
+
+    PlayerComponent(const PlayerData& data = {}) :data(data) {}
+    PlayerData data;
+    bool shoot = false;
     int faceExpression = 0;
-    int ammo = 500;
-    int health = 100;
-    int points = 0;
-    int lives = 3;
+
+
     bool key1 = false;
     bool key2 = false;
 };
@@ -99,6 +93,7 @@ struct SecretWallComponent : Component {
     Vector2i moveDir;
     Vector2i prevMapCoord;
     bool moving = false;
+    bool reached = false;
 };
 
 
@@ -368,6 +363,7 @@ private:
 
 enum class EnemyType : int {
     GUARD,
+    HOUND,
 };
 struct Target {
     Vector2f pos;
@@ -375,6 +371,11 @@ struct Target {
     float angle;
 };
 struct EnemyState;
+struct GuardData
+{
+    int counterShots = 0;
+
+};
 struct EnemyComponent : public Component
 {
     EnemyComponent(EnemyType type, int reactionTime,
@@ -389,6 +390,9 @@ struct EnemyComponent : public Component
         {
         case EnemyType::GUARD:
             this->lives = 3;
+            break;
+        case EnemyType::HOUND:
+            this->lives = 2;
             break;
         default:
             break;
@@ -424,8 +428,7 @@ struct EnemyComponent : public Component
 
 
     //attack
-    int counterShots = 0;
-
+    GuardData guardData;
     
 };
 

@@ -4,10 +4,12 @@
 #include "AppWindow.hpp"
 #include "Systems.hpp"
 #include "AssetsLoads.hpp"
+#include "Components.hpp"
 
  
 #include "GameScene.hpp"
 
+#define DEV
 
 
 GameScene::GameScene(AppScreen* window, Input* input,SoundManager* audio)
@@ -19,8 +21,15 @@ GameScene::GameScene(AppScreen* window, Input* input,SoundManager* audio)
 
 bool GameScene::initScene() {
     this->finished = false;
+    this->finishedLevel = false;
+    loadLevel(this->level);
+    return true;
+
+}
+bool GameScene::loadLevel(int level) {
     world = new World();
-    levelData.loadLevelProperties("Levels/Level_1/");
+    levelData = {};
+    levelData.loadLevelProperties("Levels/Level_" + std::to_string(level) + "/");
     Vector2i wh = Vector2i{ (int)levelData.map[0].size(),(int)levelData.map.size() };
     for (int y = 0; y < wh.y; y++)
     {
@@ -31,7 +40,6 @@ bool GameScene::initScene() {
         }
 
     }
-
     world->registerSystem<MapSystem>(this);
     world->registerSystem<CallBackSystem>(this);
     world->registerSystem<PlayerSystem>(this);
@@ -40,10 +48,8 @@ bool GameScene::initScene() {
     world->registerSystem<RayCastingSystem>(this);
     world->registerSystem<AnimationSystem>(this);
     world->registerSystem<RenderSystem>(this);
-
     world->loadScene(this);
     return true;
-
 }
 
 
@@ -52,24 +58,79 @@ void GameScene::update(){
 }
 void GameScene::render() {}
 void GameScene::quitScene(){
-
-
+    //clear wallmap todo
+    std::fill(&wallMap[0][0],&wallMap[0][0] + GFX::MAP_H * GFX::MAP_W, 0);
+    this->levelData = {  };
     delete world;
     world = nullptr;
 }
 
 
 
-BaseMenu::BaseMenu(AppScreen* window, Input* input, SoundManager* audio):
-    cursorAnim(std::vector<int>{0,1}, 2, 32)
+OpenScreen::OpenScreen(AppScreen* window, Input* input, SoundManager* audio)
 {
 
     this->window = window;
     this->input = input;
     this->audio = audio;
 }
+bool OpenScreen::initScene() {
+    this->finished = false;
+    return true;
+}
+void OpenScreen::quitScene() {
+
+}
+
+void OpenScreen::handleInput()
+{
+    if (input->pressed(SDL_SCANCODE_RETURN))
+    {
+        this->fadeScale = 1;
+    }
+}
+void OpenScreen::update()
+{
+    if (fadeScale >= 1)
+    {
+        fadeScale += 4;
+    }
+    if (fadeScale > 255)
+    {
+        finished = true;
+    }
+}
+void OpenScreen::render()
+{
+    this->getScreen()->blitTextureScale(g_assets.menuScene.gameStartImg.texture, SDL_Rect{ 0,0,GFX::SCREEN_WIDTH ,GFX::SCREEN_HEIGHT });
+    this->getScreen()->drawRect(SDL_Rect{ 0,0, GFX::SCREEN_WIDTH, GFX::SCREEN_HEIGHT }, SDL_Color{ 0,0,0,(unsigned char)(fadeScale) });
+}
+
+
+
+//
+
+
+BaseMenu::BaseMenu(AppScreen* window, Input* input, SoundManager* audio, int maxLevel,bool canChooseLevel):
+    cursorAnim(std::vector<int>{0,1}, 2, 32)
+{
+
+    this->canChooseLevel = canChooseLevel;
+    this->maxLevel = maxLevel;
+    this->window = window;
+    this->input = input;
+    this->audio = audio;
+}
 bool BaseMenu::initScene() {
     this->finished = false;
+    if (this->canChooseLevel)
+    {
+        this->chosenLevel = 1;
+    }
+    else
+    {
+        this->chosenLevel = maxLevel;
+    }
     return true;
 }
 void BaseMenu::quitScene() {
@@ -99,6 +160,20 @@ void BaseMenu::handleInput()
     {
         cursorIndex += 1;
     }
+    if (this->canChooseLevel)
+    {
+        if (input->pressed(SDL_SCANCODE_EQUALS))
+        {
+            chosenLevel++;
+            chosenLevel = std::clamp(chosenLevel, 1, this->maxLevel);
+        }
+        else if (input->pressed(SDL_SCANCODE_MINUS))
+        {
+            chosenLevel--;
+            chosenLevel = std::clamp(chosenLevel, 1, this->maxLevel);
+
+        }
+    }
     cursorIndex = std::max(cursorIndex, 0);
     cursorIndex = std::min(cursorIndex, 5);
 }
@@ -109,10 +184,9 @@ void BaseMenu::update()
 }
 void BaseMenu::render()
 {
-
-    //render cursor 
-
     int y_padd = 100;
+
+
     this->getScreen()->drawRect(SDL_Rect{ 0,0 ,GFX::SCREEN_WIDTH ,GFX::SCREEN_HEIGHT }, menuBGColor);
     this->getScreen()->drawRect(SDL_Rect{ 150,50 + y_padd,500 ,500 }, otherBGColor);
     this->getScreen()->renderText(410, 80 + y_padd, 70, "New Game", COLORS::WHITE);
@@ -129,69 +203,31 @@ void BaseMenu::render()
     this->getScreen()->blitTextureScale(g_assets.menuScene.keyIns.texture,
         SDL_Rect{ 160,GFX::SCREEN_HEIGHT-30,450 ,0 });
 
+
+
+    this->getScreen()->renderText(0, 290 + y_padd, 70, "Level:  " + std::to_string(this->chosenLevel), COLORS::WHITE, false);
+
 }
 
 
-OpenScreen::OpenScreen(AppScreen* window, Input* input, SoundManager* audio)
+//
+MenuScene::MenuScene(AppScreen* window, Input* input, SoundManager* audio, int maxLevel, bool canChooseLevel, bool firstRun)
 {
-
-    this->window = window;
-    this->input = input;
-    this->audio = audio;
-}
-bool OpenScreen::initScene() {
-    this->finished = false;
-    return true;
-}
-void OpenScreen::quitScene() {
-
-}
-
-void OpenScreen::handleInput()
-{
-    if (input->pressed(SDL_SCANCODE_RETURN))
-    {
-        this->fadeScale = 1;
-    }
-}
-void OpenScreen::update()
-{
-    if (fadeScale >= 1)
-    {
-        fadeScale+=4;
-    }
-    if (fadeScale > 255)
-    {
-        finished = true;
-    }
-}
-void OpenScreen::render()
-{
-    this->getScreen()->blitTextureScale(g_assets.menuScene.gameStartImg.texture, SDL_Rect{ 0,0,GFX::SCREEN_WIDTH ,GFX::SCREEN_HEIGHT });
-    this->getScreen()->drawRect(SDL_Rect{0,0, GFX::SCREEN_WIDTH, GFX::SCREEN_HEIGHT}, SDL_Color{0,0,0,(unsigned char)(fadeScale)});
-}
-
-
-
-#define NO_CUT_SCENES
-MenuScene::MenuScene(AppScreen* window, Input* input, SoundManager* audio):data({})
-{
-
+    this->firstRun = firstRun;
+    this->canChooseLevel = canChooseLevel;
+    this->maxLevel = maxLevel;
     this->window = window;
     this->input = input;
     this->audio = audio;
 }
 bool MenuScene::initScene() {
-    this->firstRun = false;
-
-
 
 #ifdef NOMENU
     this->finished = true;
     this->newGame = true;
 #else
-#ifdef NO_CUT_SCENES
-    this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio);
+#ifdef DEV
+    this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio, this->maxLevel, this->canChooseLevel);
 #else
     this->menuScene = std::make_unique<OpenScreen>(this->window, this->input, this->audio);
 
@@ -202,9 +238,11 @@ bool MenuScene::initScene() {
 #endif // NOMENU
     this->newGame = false;
     this->deadPlayer = false;
-    data.currentLvl = 1;
-    data.highestScore = 0;
 
+
+
+
+    this->menuScene.get()->initScene();
     return true;
 }
 void MenuScene::handleInput()
@@ -221,23 +259,27 @@ void MenuScene::update()
         auto* openScreenPtr = dynamic_cast<OpenScreen*>(ptrScene);
         if (baseMenuPtr)// Options Menu
         {
-            switch (baseMenuPtr->getOptionIndex())
+            switch (baseMenuPtr->cursorIndex)
             {
-            //escape/quit
+            //escape -> continue the game
             case -1: {
-                if (!this->deadPlayer && !firstRun)//can continue?
-                {
-                    this->finished = true;
-                    newGame = false;
-                }
-                else// i am not done with you
+                if (this->deadPlayer || firstRun)
                 {
                     ptrScene->setFinished(false);
                     return;
                 }
+                else
+                {
+                    this->finished = true;
+                    newGame = false;
+                }
+
             }break;
             //new game
             case 0: {
+                this->chosenLevel = 1;//start over the progress
+                if (this->canChooseLevel)
+                    this->chosenLevel = baseMenuPtr->chosenLevel;
                 this->finished = true;
                 newGame = true;
             }break;
@@ -252,7 +294,9 @@ void MenuScene::update()
         else if(openScreenPtr)
         {
             ptrScene->quitScene();
-            this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio);
+            this->menuScene = std::make_unique<BaseMenu>(this->window, this->input, this->audio, this->maxLevel, this->canChooseLevel);
+            this->menuScene.get()->initScene();
+            
         }
     }
     this->menuScene.get()->render();

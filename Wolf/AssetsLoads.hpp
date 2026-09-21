@@ -33,6 +33,7 @@ struct Textures
 public:
     ImgTexture wallTMap;
     ImgTexture guard;
+    ImgTexture hound;
     ImgTexture weapons;
     ImgTexture decorationsTMap;
     ImgTexture collectibleTMap;

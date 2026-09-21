@@ -52,21 +52,6 @@ namespace SPRSHEET_DATA
 	GRIDSIZE ,GRIDSIZE,1,3 };
 
 
-	//int entityWidth;
-	//int entityHeight;
-	//int entityXPad;
-	//int entityYPad;
-
-	////
-	//int xOffset;
-	//int yOffset;
-	//int gridRowGap;
-	//int gridColGap;
-	//int gridWidth;
-	//int gridHeight;
-	//int rows;
-	//int cols;
-
 	constexpr SpriteSheetData COLLECTIBLESPR[]
 	{
 		// AMMO
@@ -107,9 +92,35 @@ namespace SPRSHEET_DATA
 	constexpr SpriteSheetData GUARDTMAP = {
 		22, GRIDSIZE, 22, 0, 0, 0, 1, 1,
 		GRIDSIZE ,GRIDSIZE,8,8 };
+
 	constexpr SpriteSheetData DEAD_GUARDTMAP = {
 		40, 12, 20, 42, 0, 0, 1, 1,
 		GRIDSIZE ,GRIDSIZE,8,8 };
+
+
+	//int entityWidth;
+	//int entityHeight;
+	//int entityXPad;
+	//int entityYPad;
+
+	////
+	//int xOffset;
+	//int yOffset;
+	//int gridRowGap;
+	//int gridColGap;
+	//int gridWidth;
+	//int gridHeight;
+	//int rows;
+	//int cols;
+
+
+	constexpr SpriteSheetData HOUNDTMAP = {
+		47, 37, 9, 27, 0, 0, 1, 1,
+		GRIDSIZE ,GRIDSIZE,6,8 };
+
+
+
+
 
 
 	constexpr SpriteSheetData BASIC8X8 = {

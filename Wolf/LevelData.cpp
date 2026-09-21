@@ -355,6 +355,56 @@ bool LevelData::loadLevelProperties(const std::string& path) {
                 this->decorations.push_back(decoration);
             }
         }
+        else if (key == "GUARDS")
+        {
+
+            std::string entry;
+            auto parts = splitByString(value, ";,", 0);
+
+            for (auto part : parts)
+            {
+                entry = part;
+                entry = trim(entry);
+
+                if (entry.empty())
+                    continue;
+
+                Vector2f pos;
+                sscanf_s(
+                    entry.c_str(),
+                    "(%f,%f)",
+                    &pos.x,
+                    &pos.y
+                );
+
+                this->guards.push_back(pos);
+            }
+        }
+        else if (key == "HOUNDS")
+        {
+
+            std::string entry;
+            auto parts = splitByString(value, ";,", 0);
+
+            for (auto part : parts)
+            {
+                entry = part;
+                entry = trim(entry);
+
+                if (entry.empty())
+                    continue;
+
+                Vector2f pos;
+                sscanf_s(
+                    entry.c_str(),
+                    "(%f,%f)",
+                    &pos.x,
+                    &pos.y
+                );
+
+                this->hounds.push_back(pos);
+            }
+        }
 
 
     }

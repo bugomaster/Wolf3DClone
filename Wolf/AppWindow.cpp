@@ -91,7 +91,7 @@ void AppScreen::update() {
 
 void AppScreen::renderText(int x, int y, int fontSize,
     const std::string& text,
-    const SDL_Color& color)
+    const SDL_Color& color, bool center)
 {
     TTF_Font* font = getFont(fontSize);
     if (!font) return;
@@ -108,14 +108,23 @@ void AppScreen::renderText(int x, int y, int fontSize,
         SDL_FreeSurface(surface);
         return;
     }
-
-    SDL_Rect dst = {
-        x - surface->w / 2,
-        y - surface->h / 2,
-        surface->w,
-        surface->h
-    };
-
+    SDL_Rect dst;
+    if (center)
+    {
+        dst = {
+            x - surface->w / 2,
+            y - surface->h / 2,
+            surface->w,
+            surface->h };
+    }
+    else
+    {
+        dst = {
+            x,
+            y,
+            surface->w,
+            surface->h };
+    }
     SDL_RenderCopy(renderer, texture, nullptr, &dst);
 
     SDL_FreeSurface(surface);

@@ -6,7 +6,7 @@
 #include "AssetsLoads.hpp"
 #include "Map.hpp"
 #include "GFX.hpp"
-
+#include "Components.hpp"
 bool Core::init() {
     bool success = true;
 
@@ -19,14 +19,15 @@ bool Core::init() {
 
     //
 
-    menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio);
+    menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio, this->maxLevel, this->enableChangeLevel, true);
     menuScene.get()->initScene();
-    menuScene.get()->firstRun = true;
 
     gameScene = std::make_unique<GameScene>(&gameScreen, &gameInput, &audio);
-    gameScene.get()->initScene();
+
 #ifdef NO_MENU
-        this->scene = gameScene.get();
+    gameScene.get()->initScene();
+    gameScene.get()->level = 1;
+    this->scene = gameScene.get();
 #else
     this->scene = menuScene.get();
 #endif // NO_MENU
@@ -66,16 +67,18 @@ void Core::run() {
             if (ptrMenuS)
             {
                 // start new game
-                if (ptrMenuS->isNewGame()) {
+                if (ptrMenuS->newGame) {
                     if (gameScene.get())
                     {
                         gameScene.get()->quitScene();
                     }
-                    gameScene = std::make_unique<GameScene>(&gameScreen, &gameInput, &audio);
+                    gameScene.get()->level = menuScene.get()->chosenLevel;
                     gameScene.get()->initScene();
+                    
 
                 }
-                else {
+                else 
+                {
                     gameScene.get()->setFinished(false);
                 }
 
@@ -85,10 +88,53 @@ void Core::run() {
             }
             else if (ptrGameS)
             {
-                menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio);
-                menuScene.get()->initScene();
-                menuScene.get()->setPlayerDead(ptrGameS->isPlayerDead());
-                this->scene = menuScene.get();
+                if (ptrGameS->finishedLevel)// made it to the finish
+                {
+                    // game progress
+                    if (this->maxLevel == ptrGameS->level)
+                    {
+                        if (this->maxLevel == GFX::MAX_LEVEL)
+                        {
+                            this->enableChangeLevel = true;
+                            menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio, this->maxLevel, this->enableChangeLevel);
+                            menuScene.get()->initScene();
+                            this->scene = menuScene.get();
+                        }
+                        else
+                        {
+                            this->maxLevel++;
+                            this->playerData = gameScene.get()->playerEntity->getComponent<PlayerComponent>()->data;
+                            int nextLevel = gameScene.get()->level + 1;
+
+
+                            gameScene.get()->quitScene();
+
+
+                            //todo: cut Scene and then this
+                            gameScene.get()->level = nextLevel;
+                            gameScene.get()->initScene();
+                            gameScene.get()->playerEntity->addComponent<PlayerComponent>(this->playerData);
+
+                        }
+                        
+                    }
+                    else// chose level
+                    {
+                        this->enableChangeLevel = true;
+                        menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio, this->maxLevel, this->enableChangeLevel);
+                        menuScene.get()->initScene();
+                        menuScene.get()->canChooseLevel = true;
+                        this->scene = menuScene.get();
+
+                    }
+                }
+                else
+                {//change scene to menu if player died of pressed esc
+                    menuScene = std::make_unique<MenuScene>(&gameScreen, &gameInput, &audio, this->maxLevel, this->enableChangeLevel);
+                    menuScene.get()->initScene();
+                    menuScene.get()->deadPlayer = (ptrGameS->isPlayerDead());
+                    this->scene = menuScene.get();
+                }
             }
         }
 
@@ -104,7 +150,7 @@ void Core::quit() {
     if (menuScene)
         menuScene->quitScene();
     if (gameScene)
-        gameScene->quitScene();
+        gameScene.get()->quitScene();
     g_assets.destroyAll();
     gameScreen.destroy();
     audio.shutdown();

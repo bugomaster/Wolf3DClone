@@ -217,6 +217,7 @@
     <ClInclude Include="MathWolf.hpp" />
     <ClInclude Include="MovementSystem.hpp" />
     <ClInclude Include="pch.hpp" />
+    <ClInclude Include="PlayerData.hpp" />
     <ClInclude Include="PlayerSystem.hpp" />
     <ClInclude Include="RayCastingSystem.hpp" />
     <ClInclude Include="RenderSystem.hpp" />

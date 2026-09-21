@@ -10,7 +10,7 @@
 #include "MapSystem.hpp"
 #include "RayCastingSystem.hpp"
 #include "SoundManager.hpp"
-
+#define DEV
 /*
 TODO:
 GENERAL:
@@ -21,7 +21,8 @@ strip the real font
 
 
 ENEMIES:
-guard dog
+guard
+dog
 ss
 mutant
 officer
@@ -94,11 +95,11 @@ void PlayerSystem::update(World* world) {
 
 
 void PlayerSystem::initPlayer() {
-    Entity* player = gameScene->world->createEntity();
+    Entity* player = gameScene->world->createImmiditeEntity();
     this->playerEntity = player;
     gameScene->playerEntity = player;
 
-    player->addComponent<PlayerComponent>()->weapon = PlayerComponent::Weapon::PISTOL;
+    player->addComponent<PlayerComponent>()->data.weapon = PlayerData::Weapon::PISTOL;
     player->addComponent<InputComponent>();
     player->addComponent<TimerComponent>();
     player->addComponent<AnimationComponent>();
@@ -120,7 +121,7 @@ void PlayerSystem::initPlayer() {
             player->getComponent<TimerComponent>()->addTimer(40, [](Entity* player) {
                 auto* playerComp = player->getComponent<PlayerComponent>();
                 playerComp->faceExpression = 0;
-                });
+            });
 
         });
     });
@@ -141,11 +142,14 @@ void PlayerSystem::updateInput() {
 
     inputComp->reset();
     auto* playerComp = playerEntity->getComponent<PlayerComponent>();
-    if (playerComp->health < 1)
+    if (playerComp->data.health < 1)
     {
         //todo disable death here!
-        //this->gameScene->setFinished(true);
-        //this->gameScene->setPlayerDead(true);
+    #ifndef DEV
+            this->gameScene->setFinished(true);
+            this->gameScene->setPlayerDead(true);
+    #endif // DEV
+
     }
     if (gameScene->getInput()->held(SDL_SCANCODE_LEFT))
         inputComp->left = true;
@@ -164,7 +168,7 @@ void PlayerSystem::updateInput() {
     if (gameScene->getInput()->pressed(SDL_SCANCODE_ESCAPE)) 
         this->gameScene->setFinished(true);
     if (gameScene->getInput()->mousePressed(SDL_BUTTON_LEFT))
-        inputComp->space = true;
+        inputComp->leftButton = true;
 
     {
         //if (gameScene->getInput()->pressed(SDL_SCANCODE_P))
@@ -190,7 +194,7 @@ void PlayerSystem::updateDoorOpen() {
         if (wall->hasComponent<SecretWallComponent>())
         {
             auto* wallComp = wall->getComponent<SecretWallComponent>();
-            if (mid.rayHit.dist < 0.5f && !wallComp->moving)
+            if (mid.rayHit.dist < 0.5f && !wallComp->moving && !wallComp->reached)
             {
                 wallComp->moving = true;
                 auto* wallComp = wall->getComponent<SecretWallComponent>();
@@ -208,6 +212,7 @@ void PlayerSystem::updateDoorOpen() {
                 },
                 [this, wallComp](Entity* wall)
                 {
+                    wallComp->reached = true;
                     this->gameScene->getAudio()->stopSound(3);
                     this->gameScene->getAudio()->playSound("wallPushEnd", 1, 3);
                     wallComp->moving = false;
@@ -257,6 +262,7 @@ void PlayerSystem::updateDoorOpen() {
             wall->addComponent<VelocityComponent>(-0.01f, 0.f);
             playerEntity->getComponent<TimerComponent>()->addTimer(100, [this](Entity* player) {
                 this->gameScene->setFinished(true);
+                this->gameScene->finishedLevel = true;
             });
         }
     }
@@ -265,9 +271,9 @@ void PlayerSystem::updateDoorOpen() {
 void PlayerSystem::updateShooting() {
     auto* playerComp = playerEntity->getComponent<PlayerComponent>();
     auto* inputComp = playerEntity->getComponent<InputComponent>();
-    if (inputComp->space)
+    if (inputComp->leftButton)
     {
-        if(!playerComp->shoot && playerComp->ammo > 0)
+        if(!playerComp->shoot && playerComp->data.ammo > 0)
         {
             playerComp->shoot = true;
             this->gameScene->world->find<EnemyComponent>([=](Entity* enemy)
@@ -285,7 +291,7 @@ void PlayerSystem::updateShooting() {
                 
                 
             });
-            playerComp->ammo--;
+            playerComp->data.ammo--;
             // 10 frame cooldown between each shot
             playerEntity->getComponent<TimerComponent>()->addTimer
             (10, [=](Entity* playerEntity)
@@ -297,9 +303,9 @@ void PlayerSystem::updateShooting() {
             int weaponID;
             //get weaponID
             {
-                switch (playerComp->weapon)
+                switch (playerComp->data.weapon)
                 {
-                case PlayerComponent::Weapon::PISTOL:
+                case PlayerData::Weapon::PISTOL:
                 {
                     weaponID = 5;
                 }break;
@@ -333,8 +339,10 @@ void PlayerSystem::updateShooting() {
                         bloodEntity->addComponent<DestroyDelayComponent>(24);
 
 
-
-                        midEntity->getComponent<AnimationComponent>()->addFirst(AnimCompData{ std::vector<int>{47}, 10, false });
+                        if (enemyComp->type == EnemyType::GUARD)//hit by bullet anim
+                        {
+                            midEntity->getComponent<AnimationComponent>()->addFirst(AnimCompData{ std::vector<int>{47}, 10, false });
+                        }
 
                     }
                 }
@@ -452,24 +460,24 @@ void PlayerSystem::checkCollectibleCollision(World* world , MoveData& moveData)
             {
             case Collectible::AMMO: {
                 gameScene->getAudio()->playSound("ammo");
-                playerComp->ammo += 10;
+                playerComp->data.ammo += 10;
             }break;
             case Collectible::GOLDBOX: {
                 gameScene->getAudio()->playSound("ammo");
-                playerComp->points += 100;
+                playerComp->data.points += 100;
             }break;
             case Collectible::TROPHIE: {
                 gameScene->getAudio()->playSound("ammo");
-                playerComp->points += 100;
+                playerComp->data.points += 100;
             }break;
             case Collectible::MEAL:
             case Collectible::MEATBALLS:
             {
-                if (playerComp->health >= 100)
+                if (playerComp->data.health >= 100)
                     continue;
 
                 gameScene->getAudio()->playSound("ammo");
-                playerComp->health += 20;
+                playerComp->data.health += 20;
             }break;
             case Collectible::BLUEKEY:
             {
@@ -485,8 +493,8 @@ void PlayerSystem::checkCollectibleCollision(World* world , MoveData& moveData)
             default:
                 break;
             }
-            if (playerComp->health > 100)
-                playerComp->health = 100;
+            if (playerComp->data.health > 100)
+                playerComp->data.health = 100;
 
             world->destroyEntity(col.entity);
 

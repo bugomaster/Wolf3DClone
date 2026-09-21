@@ -39,7 +39,8 @@ public:
     void drawRect(const SDL_Rect& dstRect, const SDL_Color& color, bool fill = true, int outLineSize = 1);
     void drawRect(const SDL_FRect& dstRect, const SDL_Color& color, bool fill = true, int outLineSize = 1);
     void renderText(int x, int y, int size,
-        const std::string& text, const SDL_Color& color);
+        const std::string& text, const SDL_Color& color,
+        bool center = true);
 
 
     void blitTextureScaleCenterRotate(SDL_Texture* tex, int x, int y, int w, int h, float angle);

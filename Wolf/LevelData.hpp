@@ -72,6 +72,8 @@ struct LevelData
     std::vector<KeyData> keys;
     std::vector<DecorationData> decorations;
     std::vector<std::vector<int>> map;
+    std::vector<Vector2f> guards;
+    std::vector<Vector2f> hounds;
     bool loadLevelProperties(const std::string& path);
 };
 

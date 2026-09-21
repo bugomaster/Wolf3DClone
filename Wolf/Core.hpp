@@ -2,10 +2,11 @@
 #include "AppWindow.hpp"
 #include "Input.hpp"
 #include "SoundManager.hpp"
+#include "PlayerData.hpp"
 
 #include "GameScene.hpp"
 #include <memory>
-
+#define DEV
 struct SDL_Window;
 class Scene;
 
@@ -26,8 +27,17 @@ private:
     Scene* scene = nullptr; 
     std::unique_ptr<GameScene> gameScene;
     std::unique_ptr<MenuScene> menuScene;
-
+    PlayerData playerData = {};
     AppScreen gameScreen;
     Input gameInput;
     SoundManager audio;
+#ifdef DEV
+    bool enableChangeLevel = true;
+    int maxLevel = 2;
+#else
+    bool enableChangeLevel = false;
+    int maxLevel = 1;
+#endif // 0
+    
+
 };

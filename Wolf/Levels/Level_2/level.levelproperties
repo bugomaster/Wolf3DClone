@@ -1,4 +1,4 @@
-PLAYER_START = (4, 5)
+PLAYER_START = (2, 2)
 
 CAMERA_START = (0, 0)
 
@@ -21,9 +21,7 @@ DOORS=\
 	(8, 14) (1, 0);,\
 	(16, 14) (1, 0);,\
 	
-	
-END_GATE=\
-	(4, 19);,\
+
 	
 	
 SECRET_WALLS=\
@@ -40,11 +38,11 @@ DECORATIONS=\
 	(18, 8) FLAG;,\
 	(18, 2) TABLE;,\
 	
-GUARDS=\
+	
+# GUARDS=\
 	(6, 6);,\
 	(6, 7);,\
 	
 HOUNDS=\
 	(5, 5);,\
 	(5, 6);,\
-	

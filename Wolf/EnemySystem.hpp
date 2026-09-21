@@ -26,7 +26,11 @@ class EnemySystem : public System {
 public:
     EnemySystem(GameScene* scene);
     ~EnemySystem() {
-        freeEnemyStates(this->states);
+        for (auto s : this->statesToFree)
+        {
+            freeEnemyStates(s);
+        }
+        this->statesToFree.clear();
     }
     void update(World* world) override;
     void onAddedToWorld(World* world) override;
@@ -40,9 +44,10 @@ private:
     std::vector<Vector2f> AStar(Vector2f start, Vector2f end);
 
     EnemyState* changeState(Entity* enemy, EnemyState* newState);
-    EnemyState* buildEnemyStates();
+    EnemyState* buildGuardStates();
+    EnemyState* buildHoundStates();
     void freeEnemyStates(EnemyState* first);
-    EnemyState* states = nullptr;
+    std::vector<EnemyState*> statesToFree;
     GameScene* gameScene;
 };
 

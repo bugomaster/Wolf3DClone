@@ -25,18 +25,15 @@ public:
     void quitScene() override;
     bool isPlayerDead() { return playerDead;}
     void setPlayerDead(bool val) { playerDead = val;}
+    bool loadLevel(int level);
+    int getLevel() { return this->level; }
     int wallMap[GFX::MAP_H][GFX::MAP_W];
-
+    bool finishedLevel;
+    int level;
 private:
     bool playerDead = false;
 };
 
-struct GameData
-{
-    int highestScore;
-    int currentLvl;
-    
-};
 struct AnimComp
 {
     AnimComp(std::vector<int> ids, int frames, int ticksPerFrame) {
@@ -67,7 +64,7 @@ private:
 };
 class BaseMenu : public Scene {
 public:
-    BaseMenu(AppScreen* window, Input* input, SoundManager* audio);
+    BaseMenu(AppScreen* window, Input* input, SoundManager* audio, int maxLevel, bool canChooseLevel);
 
 public:
     void update() override;
@@ -75,10 +72,12 @@ public:
     void render() override;
     bool initScene() override;
     void quitScene() override;
-    int getOptionIndex() { return cursorIndex; }
-
-private:
+    int maxLevel = 1;
+    int chosenLevel = 1;
     int cursorIndex = 0;
+    bool canChooseLevel;
+private:
+
     AnimComp cursorAnim;
     const SDL_Color menuBGColor = { 136, 0,0 ,255 };
     const SDL_Color otherBGColor = { 88, 0,0 ,255 };
@@ -102,7 +101,7 @@ private:
 
 class MenuScene : public Scene {
 public:
-    MenuScene(AppScreen* window, Input* input, SoundManager* audio);
+    MenuScene(AppScreen* window, Input* input, SoundManager* audio, int maxLevel, bool canChooseLevel, bool firstRun = false);
 
 public:
     void update() override;
@@ -110,13 +109,13 @@ public:
     void render() override;
     bool initScene() override;
     void quitScene() override;
-    void setPlayerDead(bool val) { deadPlayer = val; }
-    bool isNewGame() { return this->newGame; }
     bool firstRun = false;
-private:
-
+    int chosenLevel = 1;
+    int maxLevel = 1;
     bool deadPlayer = false;
     bool newGame = false;
+    bool canChooseLevel;
+private:
+
     std::unique_ptr<Scene> menuScene;
-    GameData data;
 };

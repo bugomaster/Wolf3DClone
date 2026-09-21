@@ -247,22 +247,25 @@ void MapSystem::onAddedToWorld(World* world)
 	// END GATE
 	{
 		this->gameScene->levelData.endGate;
-		Entity* endGate = world->createImmiditeEntity();
-		Vector2f posGate = this->gameScene->levelData.endGate.to<float>();
-		posGate.y += 0.5;
-		endGate->addComponent<PositionComponent>(posGate)->hitBox = { 0.f,0.f, 1.f,0.1f };
-		MapSystem::gridObjectsMap[(int)posGate.y][(int)posGate.x] = endGate->getID();
-		world->getEntity(MapSystem::gridObjectsMap[(int)posGate.y][(int)posGate.x + 1])->getComponent<RectFacesComponent>()->faceIDs = { 62,62,62, 62 };
-		world->getEntity(MapSystem::gridObjectsMap[(int)posGate.y][(int)posGate.x - 1])->getComponent<RectFacesComponent>()->faceIDs = { 62,62,62, 62};
+		if (this->gameScene->levelData.endGate != Vector2i{0, 0})
+		{
+			Entity* endGate = world->createImmiditeEntity();
+			Vector2f posGate = this->gameScene->levelData.endGate.to<float>();
+			posGate.y += 0.5;
+			endGate->addComponent<PositionComponent>(posGate)->hitBox = { 0.f,0.f, 1.f,0.1f };
+			MapSystem::gridObjectsMap[(int)posGate.y][(int)posGate.x] = endGate->getID();
+			world->getEntity(MapSystem::gridObjectsMap[(int)posGate.y][(int)posGate.x + 1])->getComponent<RectFacesComponent>()->faceIDs = { 62,62,62, 62 };
+			world->getEntity(MapSystem::gridObjectsMap[(int)posGate.y][(int)posGate.x - 1])->getComponent<RectFacesComponent>()->faceIDs = { 62,62,62, 62 };
 
-		endGate->addComponent<RayCastRectObjectComponent>(Vector2f{ 1.f,0.01f });
-		endGate->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WALLTMAP, 60);
-		endGate->addComponent<TextureComponent>(g_assets.wallTMap.texture);
-		endGate->addComponent<EndGateComponent>();
-		endGate->addComponent<CantCollideWithComponent>(std::vector<ComponentID>
-		{ getComponentTypeID<WallComponent>() });
+			endGate->addComponent<RayCastRectObjectComponent>(Vector2f{ 1.f,0.01f });
+			endGate->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WALLTMAP, 60);
+			endGate->addComponent<TextureComponent>(g_assets.wallTMap.texture);
+			endGate->addComponent<EndGateComponent>();
+			endGate->addComponent<CantCollideWithComponent>(std::vector<ComponentID>
+			{ getComponentTypeID<WallComponent>() });
 
 
+		}
 	}
 
 	for (const auto& secretWall : this->gameScene->levelData.secretWalls)
