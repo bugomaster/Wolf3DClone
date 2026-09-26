@@ -8,7 +8,7 @@
 #include "RayCastingSystem.hpp"
 #include "AssetsLoads.hpp"
 #include <sstream>
-
+//#define DEV
 std::string toString(float value)
 {
     std::ostringstream oss;
@@ -17,6 +17,18 @@ std::string toString(float value)
 }
 
 //GUI
+int RenderSystem::flashTimer = -1;
+SDL_Color RenderSystem::flashColor;
+void RenderSystem::setFlash(int frames, const SDL_Color& color) {
+#ifndef  DEV
+    if (flashTimer < 0)
+    {
+        flashTimer = frames; // frames of flash
+        flashColor = color;
+    }
+#endif //  DEV
+
+}
 void RenderSystem::renderPlayerStats() 
 {
     const auto* playerComp = gameScene->playerEntity->getComponent<PlayerComponent>();
@@ -58,16 +70,19 @@ void RenderSystem::renderPlayerStats()
     SDL_Rect srcRect = { 0,0, 48, 22 };
     //weapon
     {
-        switch (playerComp->data.weapon)
+        switch (playerComp->data.weapons[0])
         {
-        case PlayerData::Weapon::KNIFE: {}break;
-        case PlayerData::Weapon::PISTOL: {
+        case WeaponType::KNIFE: {
+        
+            tMapPicPos = { 0, 0 };
+        }break;
+        case WeaponType::PISTOL: {
             tMapPicPos = { 0, 23 };
         }break;
-        case PlayerData::Weapon::RIFLE: {
+        case WeaponType::RIFLE: {
             tMapPicPos = { 49, 0 };
         }break;
-        case PlayerData::Weapon::MACHINE_GUN: {
+        case WeaponType::MACHINE_GUN: {
             tMapPicPos = { 49, 23 };
         }break;
         default:
@@ -428,7 +443,7 @@ void RenderSystem::renderWeapon()
 
     //===========
     auto* sprSheetComp = gameScene->playerEntity->getComponent<SpritesheetComponent>();
-    auto* texture = gameScene->playerEntity->getComponent<TextureComponent>();
+    auto* texture = gameScene->playerEntity->getComponent<TextureComponent>();// player's weapon texture
 
     Vector2i sprSheetCoords = sprSheetComp->getCoords();
     SDL_Rect srcRect =
@@ -460,5 +475,12 @@ void RenderSystem::update(World* world) {
 
     renderDotEntities(world);
     renderWeapon();
+    if (flashTimer > -1)
+    {
+        flashTimer--;
+        SDL_Color color = flashColor;
+        color.a = (unsigned char)(color.a + flashTimer * 6);
+        gameScene->getScreen()->fade(color);
+    }
     renderPlayerStats();
 }

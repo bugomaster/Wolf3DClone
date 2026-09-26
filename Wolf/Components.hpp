@@ -20,6 +20,8 @@ struct InputComponent : public Component {
         w(false),
         s(false),
         leftButton(false),
+        leftButtonHeld(false),
+        leftButtonReleased(false),
         disabled(false){}
     void reset() 
     {
@@ -30,6 +32,8 @@ struct InputComponent : public Component {
         this->s = false;
         this->w = false;
         this->leftButton = false;
+        this->leftButtonHeld = false;
+        this->leftButtonReleased = false;
         this->disabled = false;
         this->e = false;
 
@@ -50,6 +54,8 @@ struct InputComponent : public Component {
     bool w;
     bool s;
     bool leftButton;
+    bool leftButtonHeld;
+    bool leftButtonReleased;
     bool e;
 
 private:
@@ -324,9 +330,15 @@ struct AnimationComponent : public Component
         anims.insert(anims.begin(), animData);
 
     }
+    // clear all the anims execept the current one
     void clearQueue()
     {
-        anims.clear();
+        if (anims.size() != 0)
+        {
+            anims.erase(anims.begin() + 1, anims.end());
+        }
+
+
     }
 
     AnimCompData* getAnim()
@@ -423,10 +435,8 @@ struct EnemyComponent : public Component
 
     //chase
     int walkingTime = 0;
-    float angleOffset = 0.0f;
-    bool walkingStraight = true;
-
-
+    float angleOffset  = 0.f;
+    bool zWalk = false;
     //attack
     GuardData guardData;
     

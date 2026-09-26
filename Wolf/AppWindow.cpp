@@ -75,9 +75,9 @@ void AppScreen::clear(SDL_Color color) {
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderClear(renderer);
 }
-void AppScreen::fade(Uint8 alpha) {
+void AppScreen::fade(SDL_Color color) {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, alpha);
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 
     SDL_Rect fullscreen = { 0, 0, 1440, 960 };
     SDL_RenderFillRect(renderer, &fullscreen);

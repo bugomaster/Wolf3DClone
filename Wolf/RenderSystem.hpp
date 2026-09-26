@@ -1,6 +1,6 @@
 #pragma once
 #include "System.hpp"
-
+#include <sdl_pixels.h>
 class GameScene;
 class Entity;
 class RenderSystem : public System {
@@ -9,6 +9,9 @@ public:
         gameScene(gameScene)
     {}
     void update(World* world) override;
+    static void setFlash(int frames, const SDL_Color& color);
+    static int flashTimer;
+    static SDL_Color flashColor;
 private:
     void drawBackground();
     void renderPlayerStats();

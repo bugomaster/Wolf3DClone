@@ -185,10 +185,9 @@ bool LevelData::loadLevelProperties(const std::string& path) {
 
                 sscanf_s(
                     entry.c_str(),
-                    "(%d,%d) %d %d",
+                    "(%d,%d) %d",
                     &lockGate.position.x,
                     &lockGate.position.y,
-                    &lockGate.tileID,
                     &lockGate.keyID
                 );
                 this->lockGates.push_back(lockGate);
@@ -405,7 +404,41 @@ bool LevelData::loadLevelProperties(const std::string& path) {
                 this->hounds.push_back(pos);
             }
         }
+        else if (key == "rr")
+        {
+            std::string entry;
+            auto parts = splitByString(value, ";,", 0);
 
+            for (auto part : parts)
+            {
+                entry = part;
+                entry = trim(entry);
+
+                if (entry.empty())
+                    continue;
+
+                WeaponData data;
+                char type[32]{};
+                sscanf_s(
+                    entry.c_str(),
+                    "(%f,%f) %31s",
+                    &data.position.x,
+                    &data.position.y,
+                    type,
+                    (unsigned)_countof(type)
+                );
+                if (strcmp("MACHINEGUN", type) == 0)
+                {
+                    data.type = Collectible::MACHINE_GUN;
+                }
+                else if (strcmp("RIFLE", type) == 0)
+                {
+                    data.type = Collectible::RIFLE;
+                }
+               this->weapons.push_back(data);
+            }
+
+        }
 
     }
 

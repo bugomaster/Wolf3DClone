@@ -6,6 +6,7 @@
 #include "Map.hpp"
 #include "AssetsLoads.hpp"
 #include "SoundManager.hpp"
+#include "RenderSystem.hpp"
 //#define DISABLE_ENEMIES
 
 
@@ -255,10 +256,11 @@ EnemyState* EnemySystem::buildGuardStates()
 
     const int SIGHT_RANGE = 20;
     const int  SHOOT_RANGE = 8;
-    const int  MAX_WALKING_TIME = 40;
+    const int  MAX_WALKING_TIME = 50;
 
     const int MAX_SHOTS = 3;
-
+    const int GUARD_DAMAGE = 5;
+    const int HIT_PRECENTAGE = 50;
     patrol->onEnter = [](Entity* enemy)
     {
 
@@ -346,13 +348,13 @@ EnemyState* EnemySystem::buildGuardStates()
         auto* animComp = enemy->getComponent<AnimationComponent>();
         auto* ePos = enemy->getComponent<PositionComponent>();
         auto* enemyComp = enemy->getComponent<EnemyComponent>();
-        animComp->addAnim(AnimCompData{ std::vector<int>{8, 16, 24, 32}, 8 });//walking anim
+        animComp->addAnim(AnimCompData{ std::vector<int>{8, 16, 24, 32}, 8 , true});//walking anim
 
 
-
-        enemyComp->walkingStraight = getRandomRange(0, 1) == 1;
+        enemyComp->zWalk = getRandomRange(0, 1) == 1;
         enemyComp->walkingTime = 0;
         enemyComp->angleOffset = 0.0f;
+        enemy->getComponent<AnimationComponent>()->addAnim({ { 0, 8, 16, 24 }, 8, true });
 
 
 
@@ -394,27 +396,30 @@ EnemyState* EnemySystem::buildGuardStates()
         if (seePos(enemy, playerPos->position))
         {
 
-            if (enemyComp->walkingStraight)
+            auto* animComp = enemy->getComponent<AnimationComponent>();
+            auto currentAnim = animComp->getAnim();
+
+            if (enemyComp->zWalk)
             {
-                //walks diagonaly
-                auto* animComp = enemy->getComponent<AnimationComponent>();
-                auto* currentAnim = animComp->getAnim();
                 if (((int)((dx + dy) / 1.4f)) % 2 == 0)
                 {
-                    if (currentAnim->frameIDS[0] != 15) {
-                        enemyComp->angleOffset = getRandomRange(0.f, 0.3f);
-                        enemy->getComponent<AnimationComponent>()->addAnim({ std::vector<int>{ 15, 23, 31, 39 }, 8, true });
+                    if (currentAnim->frameIDS[0] != 15)
+                    {
+                        enemyComp->angleOffset = getRandomRange(0.2f, 0.3f);
+                        animComp->addAnim({ { 15, 23, 31, 39 }, 8, true });
                     }
                 }
                 else
                 {
-                    if (currentAnim->frameIDS[0] != 9) {
-                        enemyComp->angleOffset = -getRandomRange(0.f, 0.3f);
-                        enemy->getComponent<AnimationComponent>()->addAnim({ std::vector<int>{ 9, 17, 25, 33 }, 8, true }); 
+                    if (currentAnim->frameIDS[0] != 9)
+                    {
+                        enemyComp->angleOffset = -getRandomRange(0.2f, 0.3f);
+                        animComp->addAnim({ { 9, 17, 25, 33 }, 8, true });
                     }
                 }
-
             }
+
+
             if (distToPlayer < SHOOT_RANGE)
             {
                 if (distToPlayer < 2)//too close
@@ -422,16 +427,12 @@ EnemyState* EnemySystem::buildGuardStates()
                     changeState(enemy, attack);
                     return;
                 }
-                else if (!enemyComp->walkingStraight && enemyComp->walkingTime > MAX_WALKING_TIME * 4)
+                else if (enemyComp->walkingTime > MAX_WALKING_TIME * 4)
                 {
                     changeState(enemy, attack);
                     return;
                 }
-                else if (enemyComp->walkingTime > MAX_WALKING_TIME * 2)
-                {
-                    changeState(enemy, attack);
-                    return;
-                }
+                
 
             }
         }
@@ -502,8 +503,7 @@ EnemyState* EnemySystem::buildGuardStates()
             attack->ticks = -100;
 
 
-        enemy->getComponent<SpritesheetComponent>()->frameID = 48;
-        //enemy->getComponent<AnimationComponent>()->clearQueue();
+        enemy->getComponent<AnimationComponent>()->addAnim(AnimCompData{ std::vector<int>{48}, 16, false });
         enemy->getComponent<AnimationComponent>()->addAnim(AnimCompData{ std::vector<int>{49, 50}, 16, true });
     };
     attack->onUpdate = [=](Entity* enemy)
@@ -550,10 +550,33 @@ EnemyState* EnemySystem::buildGuardStates()
         }
 
         
-        if (attack->dealDamage && getRandomRange(0,10) > 5)
+        if (attack->dealDamage && getRandomRange(0,100) < HIT_PRECENTAGE)
         {
             attack->dealDamage = false;
-            gameScene->playerEntity->getComponent<PlayerComponent>()->data.health -= 10;
+            int damage = GUARD_DAMAGE;
+            switch (getRandomRange(1, 5))
+            {
+            case 1: {}break;
+            case 2: {
+                damage += 2;
+            }break;
+            case 3: {
+                damage += 4;
+            }break;
+            case 4: {
+                damage += 10;
+            }break;
+            case 5: {
+                damage += 14;//critical hit
+                RenderSystem::setFlash(20, SDL_Color{ 219, 22, 22 ,120 });
+
+            }break;
+            default:
+                break;
+            }
+            gameScene->playerEntity->getComponent<PlayerComponent>()->data.health -= damage;
+
+
         }
 
         if (enemyComp->guardData.counterShots > MAX_SHOTS)
@@ -599,6 +622,8 @@ EnemyState* EnemySystem::buildHoundStates()
 
     const int SIGHT_RANGE = 20;
     const int BITE_DIST = 1;
+    const int HOUND_DAMAGE = 3;
+    const int HIT_PRECENTAGE = 50;
 
 
     patrol->onEnter = [](Entity* enemy)
@@ -691,7 +716,7 @@ EnemyState* EnemySystem::buildHoundStates()
         animComp->addAnim(AnimCompData{ std::vector<int>{0,8, 16, 24}, 8 , true});//walking anim
 
 
-
+        enemyComp->walkingTime = 0;
         enemyComp->angleOffset = 0.0f;
 
 
@@ -708,6 +733,7 @@ EnemyState* EnemySystem::buildHoundStates()
     };
     chase->onUpdate = [=](Entity* enemy)
     {
+
         const auto* playerPos = gameScene->playerEntity->getComponent<PositionComponent>();
 
 
@@ -738,6 +764,37 @@ EnemyState* EnemySystem::buildHoundStates()
             {
                 changeState(enemy, attack);
                 return;
+
+            }
+            if (enemyComp->walkingTime % 400 == 0)
+            {
+                enemyComp->angleOffset = getRandomRange(-0.5f, 0.5f);
+                auto* animComp = enemy->getComponent<AnimationComponent>();
+                if (enemyComp->angleOffset > 0.f)
+                    animComp->addAnim(AnimCompData{ {7,15,23, 31},8,true });
+                else if (enemyComp->angleOffset < 0.f)
+                    animComp->addAnim(AnimCompData{ {1,9,17, 25},8,true });
+                else
+                    animComp->addAnim(AnimCompData{ {0,8, 16, 24}, 8 , true });
+
+            }
+            else if (enemyComp->walkingTime % 200 == 0)
+            {
+                enemyComp->angleOffset = getRandomRange(-0.2f, 0.2f);
+                auto* animComp = enemy->getComponent<AnimationComponent>();
+                if (enemyComp->angleOffset > 0.f)
+                    animComp->addAnim(AnimCompData{ {7,15,23, 31},8,true });
+                else if (enemyComp->angleOffset < 0.f)
+                    animComp->addAnim(AnimCompData{ {1,9,17, 25},8,true });
+                else
+                    animComp->addAnim(AnimCompData{ {0,8, 16, 24}, 8 , true });
+
+            }
+            else if(enemyComp->walkingTime % 100 == 0)
+            {
+                enemyComp->angleOffset = 0.f;
+                auto* animComp = enemy->getComponent<AnimationComponent>();
+                animComp->addAnim(AnimCompData{ {0,8, 16, 24}, 8 , true });
 
             }
         }
@@ -849,10 +906,33 @@ EnemyState* EnemySystem::buildHoundStates()
         }
 
         
-        if (attack->dealDamage && getRandomRange(0,10) > 5)
+        if (attack->dealDamage && getRandomRange(0,100) < HIT_PRECENTAGE)
         {
             attack->dealDamage = false;
-            gameScene->playerEntity->getComponent<PlayerComponent>()->data.health -= 10;
+            int damage = HOUND_DAMAGE;
+            switch (getRandomRange(1, 5))
+            {
+            case 1: {}break;
+            case 2: {
+                damage += 2;
+            }break;
+            case 3: {
+                damage += 4;
+            }break;
+            case 4: {
+                damage += 10;
+            }break;
+            case 5: {
+                damage += 14;//critical hit
+                RenderSystem::setFlash(20, SDL_Color{ 219, 22, 22 ,120 });
+
+            }break;
+            default:
+                break;
+            }
+            gameScene->playerEntity->getComponent<PlayerComponent>()->data.health -= damage;
+
+        
         }
 
     };
@@ -951,11 +1031,7 @@ void EnemySystem::update(World* world)
 {
 
     
-    for (Entity* enemy : world->getEntities())
-    {
-        // update movement
-        if (!enemy->hasComponent<EnemyComponent>())
-            continue;
+    world->find<EnemyComponent>([this](Entity* enemy) {
         auto* enemyComp = enemy->getComponent<EnemyComponent>();
         if (enemy->hasComponent<PositionComponent>() && enemy->hasComponent<VelocityComponent>())
         {
@@ -980,7 +1056,7 @@ void EnemySystem::update(World* world)
             }
 
             const auto& worldPos = enemy->getComponent<PositionComponent>()->position;
-            MapSystem::createCollectibleEntity(world, worldPos, drop);
+            MapSystem::createCollectibleEntity(this->gameScene->world, worldPos, drop);
             auto* sprSheetComp = enemy->getComponent<SpritesheetComponent>();
             // Death anim
             {
@@ -988,22 +1064,24 @@ void EnemySystem::update(World* world)
                 switch (enemyComp->type)
                 {
                 case EnemyType::GUARD:
-                {   
+                {
                     deathAnim = arrToVec(ANIMATIONS::GUARD_DIE);
-                    gameScene->getAudio()->playSound("ahh"); 
+                    gameScene->getAudio()->playSound("ahh");
                     sprSheetComp->sprSheetData = SPRSHEET_DATA::DEAD_GUARDTMAP;
                 } break;
-                case EnemyType::HOUND: 
+                case EnemyType::HOUND:
                 {
-                    gameScene->getAudio()->playSound("bark");
                     deathAnim = arrToVec(ANIMATIONS::HOUND_DIE);
+                    gameScene->getAudio()->playSound("bark");
+                    sprSheetComp->sprSheetData = SPRSHEET_DATA::DEAD_HOUNDTMAP;
+
                 } break;
                 default:
                     break;
                 }
 
                 static const int animSpeed = 6;
-                enemy->getComponent<AnimationComponent>()->addAnim(AnimCompData{deathAnim, animSpeed, false });
+                enemy->getComponent<AnimationComponent>()->addAnim(AnimCompData{ deathAnim, animSpeed, false });
             }
 
 
@@ -1012,5 +1090,7 @@ void EnemySystem::update(World* world)
             enemy->removeComponent<EnemyComponent>();//corpse
 
         }
-    }
+
+        
+    });
 }

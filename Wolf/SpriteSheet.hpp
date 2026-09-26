@@ -75,6 +75,9 @@ namespace SPRSHEET_DATA
 		{25, 20, 20, 54, 1, 0, 16, 1, GRIDSIZE, GRIDSIZE, 4, 4},
 		//GOLD KEY
 		{25, 20, 20, 54, 1, 0, 16, 1, GRIDSIZE, GRIDSIZE, 4, 4},
+		//WEAPONS
+		{25, 20, 20, 54, 1, 0, 16, 1, GRIDSIZE, GRIDSIZE, 4, 4},
+		{25, 20, 20, 54, 1, 0, 16, 1, GRIDSIZE, GRIDSIZE, 4, 4},
 	};
 	constexpr SpriteSheetData DECORATIONSPR[]
 	{
@@ -115,7 +118,10 @@ namespace SPRSHEET_DATA
 
 
 	constexpr SpriteSheetData HOUNDTMAP = {
-		47, 37, 9, 27, 0, 0, 1, 1,
+		40, 37, 12, 27, 0, 0, 1, 1,
+		GRIDSIZE ,GRIDSIZE,6,8 };
+	constexpr SpriteSheetData DEAD_HOUNDTMAP = {
+		47, 12, 9, 27, 0, 0, 1, 1,
 		GRIDSIZE ,GRIDSIZE,6,8 };
 
 

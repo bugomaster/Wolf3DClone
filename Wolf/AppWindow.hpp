@@ -26,7 +26,7 @@ public:
     void update();                
 
     //==============
-    void fade(Uint8 alpha);
+    void fade(SDL_Color color);
     void blitTexture(SDL_Texture* tex, int x, int y);
     void blitTextureScale(SDL_Texture* tex, int x, int y, int w, int h);
     void blitTextureScale(SDL_Texture* tex, const SDL_Rect& rect);

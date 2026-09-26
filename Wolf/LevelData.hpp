@@ -10,6 +10,8 @@ enum class Collectible
     MEATBALLS,
     BLUEKEY,
     GOLDKEY,
+    MACHINE_GUN,
+    RIFLE
 };
 struct CollectibleData
 {
@@ -46,7 +48,6 @@ struct SecretWall
 struct LockGate
 {
     Vector2i position;
-    int tileID;
     int keyID;
 
 };
@@ -55,6 +56,12 @@ struct Door
 {
     Vector2i position;
     Vector2i dirMove;
+
+};
+struct WeaponData
+{
+    Collectible type;
+    Vector2f position;
 
 };
 
@@ -74,6 +81,7 @@ struct LevelData
     std::vector<std::vector<int>> map;
     std::vector<Vector2f> guards;
     std::vector<Vector2f> hounds;
+    std::vector<WeaponData> weapons;
     bool loadLevelProperties(const std::string& path);
 };
 

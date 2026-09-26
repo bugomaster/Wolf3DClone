@@ -10,6 +10,7 @@
 #include "MapSystem.hpp"
 #include "RayCastingSystem.hpp"
 #include "SoundManager.hpp"
+#include "RenderSystem.hpp"
 #define DEV
 /*
 TODO:
@@ -21,8 +22,6 @@ strip the real font
 
 
 ENEMIES:
-guard
-dog
 ss
 mutant
 officer
@@ -95,16 +94,17 @@ void PlayerSystem::update(World* world) {
 
 
 void PlayerSystem::initPlayer() {
-    Entity* player = gameScene->world->createImmiditeEntity();
+    Entity* player = gameScene->world->createEntity();
     this->playerEntity = player;
     gameScene->playerEntity = player;
 
-    player->addComponent<PlayerComponent>()->data.weapon = PlayerData::Weapon::PISTOL;
+    player->addComponent<PlayerComponent>()->data.weapons = { WeaponType::PISTOL,  WeaponType::KNIFE };
     player->addComponent<InputComponent>();
     player->addComponent<TimerComponent>();
     player->addComponent<AnimationComponent>();
     player->addComponent<TextureComponent>(g_assets.weapons.texture);
-    player->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WEAPONS, 25);
+    player->addComponent<SpritesheetComponent>(SPRSHEET_DATA::WEAPONS, 5);
+
     player->addComponent<VelocityComponent>(0.f, 0.f, 0.f);
     player->addComponent<PositionComponent>
         (gameScene->levelData.playerStart, GFX::PLAYER_RADIUS)
@@ -144,7 +144,6 @@ void PlayerSystem::updateInput() {
     auto* playerComp = playerEntity->getComponent<PlayerComponent>();
     if (playerComp->data.health < 1)
     {
-        //todo disable death here!
     #ifndef DEV
             this->gameScene->setFinished(true);
             this->gameScene->setPlayerDead(true);
@@ -169,6 +168,10 @@ void PlayerSystem::updateInput() {
         this->gameScene->setFinished(true);
     if (gameScene->getInput()->mousePressed(SDL_BUTTON_LEFT))
         inputComp->leftButton = true;
+    if (gameScene->getInput()->mouseHeld(SDL_BUTTON_LEFT))
+        inputComp->leftButtonHeld = true;
+    if (gameScene->getInput()->mouseReleased(SDL_BUTTON_LEFT))
+        inputComp->leftButtonReleased = true;
 
     {
         //if (gameScene->getInput()->pressed(SDL_SCANCODE_P))
@@ -176,6 +179,64 @@ void PlayerSystem::updateInput() {
         //    auto* posComp = playerEntity->getComponent<PositionComponent>();
         //    println(posComp->position, true);
         //}
+    }
+
+
+
+    //weapons switch
+    auto* playerSpriteSheet = playerEntity->getComponent<SpritesheetComponent>();
+
+    if (gameScene->getInput()->pressed(SDL_SCANCODE_1)){
+        auto it = std::find(
+            playerComp->data.weapons.begin(),
+            playerComp->data.weapons.end(),
+            WeaponType::PISTOL);
+
+        if (it != playerComp->data.weapons.end())
+        {
+            playerSpriteSheet->frameID = 5;
+            std::iter_swap(it, playerComp->data.weapons.begin());
+        }
+
+    }
+    if (gameScene->getInput()->pressed(SDL_SCANCODE_2)) {
+
+        auto it = std::find(
+            playerComp->data.weapons.begin(),
+            playerComp->data.weapons.end(),
+            WeaponType::KNIFE);
+
+        if (it != playerComp->data.weapons.end())
+        {
+            playerSpriteSheet->frameID = 0;
+            std::iter_swap(it, playerComp->data.weapons.begin());
+        }
+
+    }
+    if (gameScene->getInput()->pressed(SDL_SCANCODE_3)) {
+        auto it = std::find(
+            playerComp->data.weapons.begin(),
+            playerComp->data.weapons.end(),
+            WeaponType::RIFLE);
+
+        if (it != playerComp->data.weapons.end())
+        {
+            playerSpriteSheet->frameID = 10;
+            std::iter_swap(it, playerComp->data.weapons.begin());
+        }
+    }
+    if (gameScene->getInput()->pressed(SDL_SCANCODE_4)){
+        auto it = std::find(
+            playerComp->data.weapons.begin(),
+            playerComp->data.weapons.end(),
+            WeaponType::MACHINE_GUN);
+
+        if (it != playerComp->data.weapons.end())
+        {
+            playerSpriteSheet->frameID = 15;
+            std::iter_swap(it, playerComp->data.weapons.begin());
+        }
+
     }
 
 }
@@ -203,7 +264,7 @@ void PlayerSystem::updateDoorOpen() {
                 velDoor->dx = wallComp->moveDir.x * 0.01f;
                 velDoor->dy = wallComp->moveDir.y * 0.01f;
 
-                this->gameScene->getAudio()->playSound("wallPush", 100, 3);
+                this->gameScene->getAudio()->playSound("wallPush", 100, SOUND_CHANNELS::WALL);
 
                 wall->addComponent<WaitUntilComponent>([](Entity* wall)
                 {
@@ -214,7 +275,7 @@ void PlayerSystem::updateDoorOpen() {
                 {
                     wallComp->reached = true;
                     this->gameScene->getAudio()->stopSound(3);
-                    this->gameScene->getAudio()->playSound("wallPushEnd", 1, 3);
+                    this->gameScene->getAudio()->playSound("wallPushEnd", 1, SOUND_CHANNELS::WALL);
                     wallComp->moving = false;
                     auto* posWall = wall->getComponent<PositionComponent>();
                     Vector2i currentPosI = { (int)posWall->position.x , (int)posWall->position.y };
@@ -241,29 +302,30 @@ void PlayerSystem::updateDoorOpen() {
             auto* doorComp = wall->getComponent<DoorComponent>();
             if (!doorComp->open) {
                 doorComp->opening = true;
-                this->gameScene->getAudio()->playSound("doorOpen", 0, 7);
+                this->gameScene->getAudio()->playSound("doorOpen", 0, SOUND_CHANNELS::DOOR);
             }
         }
-        else if (inputComp->e && wall->hasComponent<LockGateComponent>() && mid.rayHit.dist < 1.5f)
+        else if (inputComp->e && wall->hasComponent<LockGateComponent>() && 
+            (int)mid.face == wall->getComponent<LockGateComponent>()->face && mid.rayHit.dist < 1.5f)
         {
+            
             auto* lockComp = wall->getComponent<LockGateComponent>();
             if (!lockComp->on &&
                 ((lockComp->keyID == 1 && playerComp->key1) ||
                 (lockComp->keyID == 2 && playerComp->key2) ))
             {
                 lockComp->on = true;
-                wall->getComponent<RectFacesComponent>()->faceIDs.at(0) = 43;// open texture
+                wall->getComponent<RectFacesComponent>()->faceIDs.at(lockComp->face) = 43;// open texture
+                if (lockComp->keyID == 1 && playerComp->key1)
+                {
+                    playerEntity->getComponent<TimerComponent>()->addTimer(100, [this](Entity* player) {
+                        this->gameScene->setFinished(true);
+                        this->gameScene->finishedLevel = true;
+                    });
+
+                }
                 
             }
-        }
-        else if (inputComp->e && wall->hasComponent<EndGateComponent>() && mid.rayHit.dist < 1.5f)
-        {
-            wall->getComponent<SpritesheetComponent>()->frameID = 61;
-            wall->addComponent<VelocityComponent>(-0.01f, 0.f);
-            playerEntity->getComponent<TimerComponent>()->addTimer(100, [this](Entity* player) {
-                this->gameScene->setFinished(true);
-                this->gameScene->finishedLevel = true;
-            });
         }
     }
 
@@ -271,52 +333,88 @@ void PlayerSystem::updateDoorOpen() {
 void PlayerSystem::updateShooting() {
     auto* playerComp = playerEntity->getComponent<PlayerComponent>();
     auto* inputComp = playerEntity->getComponent<InputComponent>();
-    if (inputComp->leftButton)
+    auto* animComp = playerEntity->getComponent<AnimationComponent>();
+    int weaponID;
+    bool knife = false;
+    bool machineGun = false;
+    //get weaponID
     {
-        if(!playerComp->shoot && playerComp->data.ammo > 0)
+        switch (playerComp->data.weapons.at(0))
+        {
+        case WeaponType::KNIFE:
+        {
+            knife = true;
+            weaponID = 0;
+        }break;
+        case WeaponType::PISTOL:
+        {
+            gameScene->getAudio()->playSound("gunfire");
+            weaponID = 5;
+        }break;
+        case WeaponType::RIFLE:
+        {
+            weaponID = 10;
+        }break;
+        case WeaponType::MACHINE_GUN:
+        {
+            machineGun = true;
+            weaponID = 15;
+        }break;
+        default:
+            break;
+        }
+    }
+
+    bool canShoot = playerComp->data.ammo > 0 || knife;
+
+    if (!playerComp->shoot && canShoot)
+    {
+        if (inputComp->leftButton)
         {
             playerComp->shoot = true;
-            this->gameScene->world->find<EnemyComponent>([=](Entity* enemy)
-            {
-                
-                Vector2f posEnemy = enemy->getComponent<PositionComponent>()->position;
-                Vector2f posPlayer = playerEntity->getComponent<PositionComponent>()->position;
-                float dx = posPlayer.x - posEnemy.x;
-                float dy = posPlayer.y - posEnemy.y;
-                float dis = std::hypot(dx, dy);
-                if (dis < 5)
-                {
-                    enemy->getComponent<EnemyComponent>()->hearShot = true;// i shot . u guys should hear it
-                }
-                
-                
-            });
-            playerComp->data.ammo--;
-            // 10 frame cooldown between each shot
-            playerEntity->getComponent<TimerComponent>()->addTimer
-            (10, [=](Entity* playerEntity)
-            {
-                playerComp->shoot = false;
-            });
 
-            int animTicksTimer = 1;
-            int weaponID;
-            //get weaponID
+            // for every shot notify the enemies
+            if (knife)
             {
-                switch (playerComp->data.weapon)
-                {
-                case PlayerData::Weapon::PISTOL:
-                {
-                    weaponID = 5;
-                }break;
-                default:
-                    break;
-                }
+                playerComp->data.ammo--;
+                this->gameScene->world->find<EnemyComponent>([=](Entity* enemy)
+                    {
+
+                        Vector2f posEnemy = enemy->getComponent<PositionComponent>()->position;
+                        Vector2f posPlayer = playerEntity->getComponent<PositionComponent>()->position;
+                        float dx = posPlayer.x - posEnemy.x;
+                        float dy = posPlayer.y - posEnemy.y;
+                        float dis = std::hypot(dx, dy);
+                        if (dis < 5)
+                        {
+                            enemy->getComponent<EnemyComponent>()->hearShot = true;// i shot . u guys should hear it
+                        }
+
+
+                    });
             }
-            std::vector<int> shootAnimFrameIDs =
-            { weaponID, weaponID + 1, weaponID + 2, weaponID + 3, weaponID + 4, weaponID };
-            playerEntity->getComponent<AnimationComponent>()->addAnim(AnimCompData{shootAnimFrameIDs, animTicksTimer, false });
-            gameScene->getAudio()->playSound("gunfire");
+
+
+            //coolDown
+            if (!machineGun)
+            {
+                playerEntity->getComponent<TimerComponent>()->addTimer
+                (10, [=](Entity* playerEntity)
+                    {
+                        playerComp->shoot = false;
+                    });
+            }
+            else
+            {
+                playerEntity->getComponent<TimerComponent>()->addTimer
+                (6, [=](Entity* playerEntity)
+                    {
+                        playerComp->shoot = false;
+                    });
+            }
+            animComp->addAnim(AnimCompData
+                { { weaponID, weaponID + 1, weaponID + 2, weaponID + 3, weaponID + 4, weaponID }, 1, false });
+
 
 
             // if hit enemy
@@ -324,32 +422,98 @@ void PlayerSystem::updateShooting() {
             if (midEntity)
             {
                 auto* enemyComp = midEntity->getComponent<EnemyComponent>();
-                if (enemyComp && RayCastingSystem::middleRay.rayHit.dist < GFX::MAX_SHOOT_RANGE)
+                if (enemyComp)
                 {
-                    enemyComp->lives--;
-                    if (enemyComp->lives > 0)
+                    float range = GFX::MAX_SHOOT_RANGE;
+                    if (knife)
+                        range = 2.f;
+                    if (RayCastingSystem::middleRay.rayHit.dist < range)
                     {
-                        Entity* bloodEntity = this->gameScene->world->createEntity();
-                        bloodEntity->addComponent<PositionComponent>(midEntity->getComponent<PositionComponent>()->position);
-                        bloodEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::BLOOD, 0);
-                        bloodEntity->addComponent<AnimationComponent>();
-                        bloodEntity->getComponent<AnimationComponent>()->addAnim(AnimCompData{ shuffleVtrInt({0,1,2}), 8, false });
-                        bloodEntity->addComponent<TextureComponent>(g_assets.bloodTMap.texture);
-                        bloodEntity->addComponent<RayCastDotObjectComponent>(false);
-                        bloodEntity->addComponent<DestroyDelayComponent>(24);
-
-
-                        if (enemyComp->type == EnemyType::GUARD)//hit by bullet anim
+                        enemyComp->lives--;
+                        if (enemyComp->lives > 0)
                         {
-                            midEntity->getComponent<AnimationComponent>()->addFirst(AnimCompData{ std::vector<int>{47}, 10, false });
+                            Entity* bloodEntity = this->gameScene->world->createEntity();
+                            bloodEntity->addComponent<PositionComponent>(midEntity->getComponent<PositionComponent>()->position);
+                            bloodEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::BLOOD, 0);
+                            bloodEntity->addComponent<AnimationComponent>()->addAnim(AnimCompData{ shuffleVtrInt({0,1,2}), 8, false });
+                            bloodEntity->addComponent<TextureComponent>(g_assets.bloodTMap.texture);
+                            bloodEntity->addComponent<RayCastDotObjectComponent>(false);
+                            bloodEntity->addComponent<DestroyDelayComponent>(24);
+
+
+                            if (enemyComp->type == EnemyType::GUARD)//hit by bullet anim
+                            {
+                                midEntity->getComponent<AnimationComponent>()->addFirst(AnimCompData{ std::vector<int>{47}, 10, false });
+                            }
+
                         }
 
+
                     }
+
+                }
+            }
+
+        }
+        if (inputComp->leftButtonHeld && machineGun)
+        {
+            //coolDown
+            playerComp->shoot = true;
+            playerEntity->getComponent<TimerComponent>()->addTimer
+            (6, [=](Entity* playerEntity)
+                {
+                    playerComp->shoot = false;
+                });
+
+
+            animComp->addAnim(AnimCompData
+                { { weaponID, weaponID + 1, weaponID + 2, weaponID + 3, weaponID + 4, weaponID }, 2, false });
+            playerComp->data.ammo -= 1;
+
+
+            Entity* midEntity = this->gameScene->world->getEntity(RayCastingSystem::middleRay.entityID);
+            if (midEntity)
+            {
+                auto* enemyComp = midEntity->getComponent<EnemyComponent>();
+                if (enemyComp)
+                {
+                    if (RayCastingSystem::middleRay.rayHit.dist < GFX::MAX_SHOOT_RANGE)
+                    {
+                        enemyComp->lives--;
+                        if (enemyComp->lives > 0)
+                        {
+                            Entity* bloodEntity = this->gameScene->world->createEntity();
+                            bloodEntity->addComponent<PositionComponent>(midEntity->getComponent<PositionComponent>()->position);
+                            bloodEntity->addComponent<SpritesheetComponent>(SPRSHEET_DATA::BLOOD, 0);
+                            bloodEntity->addComponent<AnimationComponent>()->addAnim(AnimCompData{ shuffleVtrInt({0,1,2}), 8, false });
+                            bloodEntity->addComponent<TextureComponent>(g_assets.bloodTMap.texture);
+                            bloodEntity->addComponent<RayCastDotObjectComponent>(false);
+                            bloodEntity->addComponent<DestroyDelayComponent>(24);
+
+
+                            if (enemyComp->type == EnemyType::GUARD)//hit by bullet anim
+                            {
+                                midEntity->getComponent<AnimationComponent>()->addFirst(AnimCompData{ std::vector<int>{47}, 10, false });
+                            }
+
+                        }
+
+
+                    }
+
                 }
             }
 
         }
 
+    }
+
+
+
+    // for mgun
+    if (inputComp->leftButtonReleased)
+    {
+        animComp->clearQueue();
     }
 }
 void PlayerSystem::updateMovement() {
@@ -448,12 +612,13 @@ void PlayerSystem::checkCollectibleCollision(World* world , MoveData& moveData)
 {
     
     auto* playerComp = playerEntity->getComponent<PlayerComponent>();
+    auto* playerSpriteSheet = playerEntity->getComponent<SpritesheetComponent>();
 
     for (const auto& col : moveData.collisions)
     {
         if (col.entity->hasComponent<CollectibleComponent>())
         {
-            //todo
+            //todo 
             // collect
             Collectible typeCollectible = col.entity->getComponent<CollectibleComponent>()->type;
             switch (typeCollectible)
@@ -489,6 +654,18 @@ void PlayerSystem::checkCollectibleCollision(World* world , MoveData& moveData)
                 gameScene->getAudio()->playSound("ammo");
                 playerComp->key2 = true;
             }break;
+            case Collectible::RIFLE:
+            {
+                gameScene->getAudio()->playSound("ammo");
+                playerSpriteSheet->frameID = 10;
+                playerComp->data.weapons.insert(playerComp->data.weapons.begin(), WeaponType::RIFLE);
+            }break;
+            case Collectible::MACHINE_GUN:
+            {
+                gameScene->getAudio()->playSound("ammo");
+                playerSpriteSheet->frameID = 15;
+                playerComp->data.weapons.insert(playerComp->data.weapons.begin(), WeaponType::MACHINE_GUN);
+            }break;
 
             default:
                 break;
@@ -497,7 +674,7 @@ void PlayerSystem::checkCollectibleCollision(World* world , MoveData& moveData)
                 playerComp->data.health = 100;
 
             world->destroyEntity(col.entity);
-
+            RenderSystem::setFlash(12, SDL_Color{ 209, 240, 102,120 });
             return;
         }
     }

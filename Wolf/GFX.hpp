@@ -29,6 +29,13 @@ namespace COLORS {
 
 
 }
+namespace SOUND_CHANNELS
+{
+	constexpr int DOOR = 2;
+	constexpr int WALL = 3;
+
+
+}
 namespace GFX
 {
 

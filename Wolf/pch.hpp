@@ -246,14 +246,16 @@ public:
     }
 
     std::vector<Entity*> pendingEntities;
-    Entity* createEntity() {
+    Entity* createEntity(bool immidiate = false) 
+    {
+        if (immidiate)
+        {
+            Entity* e = new Entity(nextEntityID++);
+            entities.push_back(e);
+            return e;
+        }
         Entity* e = new Entity(nextEntityID++);
         pendingEntities.push_back(e);
-        return e;
-    }
-    Entity* createImmiditeEntity() {
-        Entity* e = new Entity(nextEntityID++);
-        entities.push_back(e);
         return e;
     }
 
@@ -294,6 +296,7 @@ public:
             this->entities.push_back(e);
         }
         pendingEntities.clear();
+
         for (auto& system : systems) {
             if (system->enabled) {
                 system->update(this);
@@ -301,7 +304,8 @@ public:
         }
         processDestroyQueue();
     }
-    std::vector<Entity*>& getEntities() {
+    std::vector<Entity*>& getEntities()
+    {
         return entities;
     }
     std::vector<Entity*>& getEntitiesWithPos() {
